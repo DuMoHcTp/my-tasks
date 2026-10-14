@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Мои задачи</title>
+
+<!-- PWA мета-теги -->
+<meta name="theme-color" content="#667eea">
+<meta name="description" content="Умный планировщик задач">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Задачи">
+<link rel="manifest" href="manifest.json">
+
+<!-- Иконки (генерируются через canvas ниже) -->
+<link rel="icon" type="image/png" sizes="192x192" id="icon192">
+<link rel="apple-touch-icon" sizes="180x180" id="appleIcon">
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Для iOS safe area */
+  @supports (padding: max(0px)) {
+    body { padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 { color: white; text-align: center; margin-bottom: 20px; font-size: 2em; }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+  }
+  .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  input, button, select {
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  input:focus, select:focus { border-color: #667eea; }
+  .task-input { flex: 1; min-width: 200px; }
+  .date-input { width: 170px; }
+  .time-input { width: 120px; }
+  button {
+    background: #667eea;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:hover { background: #5568d3; transform: translateY(-1px); }
+  .btn-del { background: #ff6b6b; padding: 6px 12px; font-size: 13px; }
+  .btn-done { background: #51cf66; padding: 6px 12px; font-size: 13px; }
+  .filters { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+  .filter-btn {
+    background: #f0f0f0;
+    color: #555;
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 20px;
+  }
+  .filter-btn.active { background: #667eea; color: white; }
+  .month-group { margin-bottom: 25px; }
+  .month-title {
+    font-size: 1.3em;
+    color: #667eea;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #e0e0e0;
+    text-transform: capitalize;
+  }
+  .day-group { margin-bottom: 15px; }
+  .day-title {
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .day-title.today { color: #667eea; font-weight: 700; }
+  .day-title.overdue { color: #ff6b6b; }
+  .task {
+    background: #f8f9ff;
+    border-left: 4px solid #667eea;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .task:hover { transform: translateX(3px); box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+  .task.done { opacity: 0.5; border-left-color: #51cf66; }
+  .task.done .task-text { text-decoration: line-through; }
+  .task-time {
+    background: #667eea;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 55px;
+    text-align: center;
+  }
+  .task-text { flex: 1; font-size: 15px; }
+  .task-actions { display: flex; gap: 5px; }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .stat {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .stat-num { font-size: 1.8em; font-weight: 700; }
+  .stat-label { font-size: 0.85em; opacity: 0.9; }
+  .empty { text-align: center; color: #999; padding: 40px; font-style: italic; }
+  .hint { font-size: 12px; color: #888; margin-top: 8px; }
+
+  /* Кнопка установки PWA */
+  .install-banner {
+    background: linear-gradient(135deg, #51cf66, #37b24d);
+    color: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 5px 15px rgba(81, 207, 102, 0.3);
+  }
+  .install-banner.show { display: flex; }
+  .install-banner-text { flex: 1; font-weight: 600; }
+  .install-btn {
+    background: white !important;
+    color: #37b24d !important;
+    padding: 8px 16px !important;
+    font-weight: 700 !important;
+  }
+  .install-close {
+    background: transparent !important;
+    color: white !important;
+    padding: 4px 8px !important;
+    font-size: 20px !important;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📋 Мои задачи</h1>
+
+  <!-- Баннер установки PWA -->
+  <div class="install-banner" id="installBanner">
+    <div class="install-banner-text">📱 Установить как приложение?</div>
+    <button class="install-btn" onclick="installApp()">Установить</button>
+    <button class="install-close" onclick="closeInstall()">×</button>
+  </div>
+
+  <div class="card">
+    <div class="input-row">
+      <input type="text" id="taskInput" class="task-input" placeholder="Что нужно сделать? (например: завтра в 15:00 купить молоко)">
+      <input type="date" id="dateInput" class="date-input">
+      <input type="time" id="timeInput" class="time-input">
+      <button onclick="addTask()">➕ Добавить</button>
+    </div>
+    <div class="hint">💡 Подсказка: пиши дату прямо в тексте — "сегодня", "завтра", "послезавтра", "в понедельник", "15 октября в 18:00"</div>
+  </div>
+
+  <div class="card">
+    <div class="stats">
+      <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Всего</div></div>
+      <div class="stat"><div class="stat-num" id="statToday">0</div><div class="stat-label">Сегодня</div></div>
+      <div class="stat"><div class="stat-num" id="statWeek">0</div><div class="stat-label">На неделе</div></div>
+      <div class="stat"><div class="stat-num" id="statDone">0</div><div class="stat-label">Выполнено</div></div>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">Все</button>
+      <button class="filter-btn" data-filter="today">Сегодня</button>
+      <button class="filter-btn" data-filter="week">Неделя</button>
+      <button class="filter-btn" data-filter="month">Месяц</button>
+      <button class="filter-btn" data-filter="active">Активные</button>
+      <button class="filter-btn" data-filter="done">Выполненные</button>
+    </div>
+    <div id="taskList"></div>
+  </div>
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+let currentFilter = 'all';
+let deferredPrompt = null;
+
+const MONTHS = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const WEEKDAYS = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+
+// ========== ГЕНЕРАЦИЯ ИКОНОК ==========
+function generateIcon(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Градиентный фон
+  const gradient = ctx.createLinearGradient(0, 0, size, size);
+  gradient.addColorStop(0, '#667eea');
+  gradient.addColorStop(1, '#764ba2');
+  ctx.fillStyle = gradient;
+
+  // Скруглённый прямоугольник
+  const r = size * 0.2;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(size - r, 0);
+  ctx.quadraticCurveTo(size, 0, size, r);
+  ctx.lineTo(size, size - r);
+  ctx.quadraticCurveTo(size, size, size - r, size);
+  ctx.lineTo(r, size);
+  ctx.quadraticCurveTo(0, size, 0, size - r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  // Галочка
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = size * 0.12;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(size * 0.25, size * 0.5);
+  ctx.lineTo(size * 0.45, size * 0.7);
+  ctx.lineTo(size * 0.75, size * 0.3);
+  ctx.stroke();
+
+  return canvas.toDataURL('image/png');
+}
+
+// Устанавливаем иконки
+const icon192 = generateIcon(192);
+const icon512 = generateIcon(512);
+document.getElementById('icon192').href = icon192;
+document.getElementById('appleIcon').href = generateIcon(180);
+
+// ========== PWA УСТАНОВКА ==========
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  document.getElementById('installBanner').classList.remove('show');
+  console.log('✅ PWA установлено!');
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(result => {
+      if (result.outcome === 'accepted') console.log('Пользователь согласился');
+      deferredPrompt = null;
+      document.getElementById('installBanner').classList.remove('show');
+    });
+  } else {
+    // Для iOS — показываем инструкцию
+    alert('📱 Чтобы установить приложение:\n\n• На iPhone: нажми "Поделиться" → "На экран «Домой»"\n• На Android: меню браузера (⋮) → "Добавить на главный экран"');
+  }
+}
+
+function closeInstall() {
+  document.getElementById('installBanner').classList.remove('show');
+}
+
+// ========== РЕГИСТРАЦИЯ SERVICE WORKER ==========
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => console.log('✅ Service Worker зарегистрирован'))
+    .catch(err => console.log('❌ Ошибка SW:', err));
+}
+
+// ========== ОСНОВНАЯ ЛОГИКА ==========
+document.getElementById('dateInput').valueAsDate = new Date();
+
+function parseDateFromText(text) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  let date = null, time = null;
+  let cleanText = text;
+
+  const timeMatch = text.match(/в\s*(\d{1,2})[:\.](\d{2})/i) || text.match(/(\d{1,2})[:\.](\d{2})/);
+  if (timeMatch) {
+    time = { h: parseInt(timeMatch[1]), m: parseInt(timeMatch[2]) };
+    cleanText = cleanText.replace(timeMatch[0], '').trim();
+  }
+
+  if (/сегодня/i.test(cleanText)) {
+    date = new Date(today);
+    cleanText = cleanText.replace(/сегодня/i, '').trim();
+  } else if (/завтра/i.test(cleanText)) {
+    date = new Date(today); date.setDate(date.getDate() + 1);
+    cleanText = cleanText.replace(/завтра/i, '').trim();
+  } else if (/послезавтра/i.test(cleanText)) {
+    date = new Date(today); date.setDate(date.getDate() + 2);
+    cleanText = cleanText.replace(/послезавтра/i, '').trim();
+  } else {
+    const dayMatch = cleanText.match(/в\s*(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)/i);
+    if (dayMatch) {
+      const dayNames = { 'понедельник':1,'вторник':2,'среду':3,'четверг':4,'пятницу':5,'субботу':6,'воскресенье':0 };
+      const target = dayNames[dayMatch[1].toLowerCase()];
+      const diff = (target - today.getDay() + 7) % 7 || 7;
+      date = new Date(today); date.setDate(date.getDate() + diff);
+      cleanText = cleanText.replace(dayMatch[0], '').trim();
+    } else {
+      const dateMatch = cleanText.match(/(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)/i);
+      if (dateMatch) {
+        const day = parseInt(dateMatch[1]);
+        const month = MONTHS_GEN.indexOf(dateMatch[2].toLowerCase());
+        date = new Date(today.getFullYear(), month, day);
+        if (date < today) date.setFullYear(date.getFullYear() + 1);
+        cleanText = cleanText.replace(dateMatch[0], '').trim();
+      }
+    }
+  }
+
+  cleanText = cleanText.replace(/^\s*(в|на|к|по)\s+/i, '').trim();
+  cleanText = cleanText.replace(/\s+/g, ' ').trim();
+
+  return { text: cleanText, date, time };
+}
+
+function addTask() {
+  const rawText = document.getElementById('taskInput').value.trim();
+  const dateVal = document.getElementById('dateInput').value;
+  const timeVal = document.getElementById('timeInput').value;
+
+  if (!rawText) { alert('Введите задачу!'); return; }
+
+  const parsed = parseDateFromText(rawText);
+  let finalDate = dateVal || (parsed.date ? formatDate(parsed.date) : formatDate(new Date()));
+  let finalTime = timeVal || (parsed.time ? `${String(parsed.time.h).padStart(2,'0')}:${String(parsed.time.m).padStart(2,'0')}` : '');
+
+  tasks.push({
+    id: Date.now(),
+    text: parsed.text || rawText,
+    date: finalDate,
+    time: finalTime,
+    done: false,
+    created: Date.now()
+  });
+
+  save();
+  render();
+
+  document.getElementById('taskInput').value = '';
+  document.getElementById('timeInput').value = '';
+  document.getElementById('taskInput').focus();
+}
+
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function toggleDone(id) {
+  const t = tasks.find(t => t.id === id);
+  if (t) { t.done = !t.done; save(); render(); }
+}
+
+function deleteTask(id) {
+  if (!confirm('Удалить задачу?')) return;
+  tasks = tasks.filter(t => t.id !== id);
+  save(); render();
+}
+
+function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+
+function getFiltered() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
+  const monthEnd = new Date(today); monthEnd.setMonth(monthEnd.getMonth() + 1);
+
+  return tasks.filter(t => {
+    const d = new Date(t.date);
+    if (currentFilter === 'today') return t.date === formatDate(today);
+    if (currentFilter === 'week') return d >= today && d < weekEnd;
+    if (currentFilter === 'month') return d >= today && d < monthEnd;
+    if (currentFilter === 'active') return !t.done;
+    if (currentFilter === 'done') return t.done;
+    return true;
+  });
+}
+
+function render() {
+  const list = document.getElementById('taskList');
+  const filtered = getFiltered().sort((a,b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return (a.time || '99:99').localeCompare(b.time || '99:99');
+  });
+
+  const today = formatDate(new Date());
+  const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
+  document.getElementById('statTotal').textContent = tasks.length;
+  document.getElementById('statToday').textContent = tasks.filter(t => t.date === today && !t.done).length;
+  document.getElementById('statWeek').textContent = tasks.filter(t => {
+    const d = new Date(t.date); const now = new Date();
+    return d >= now && d < weekEnd && !t.done;
+  }).length;
+  document.getElementById('statDone').textContent = tasks.filter(t => t.done).length;
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty">🌟 Задач нет. Самое время добавить первую!</div>';
+    return;
+  }
+
+  const byMonth = {};
+  filtered.forEach(t => {
+    const d = new Date(t.date);
+    const mKey = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!byMonth[mKey]) byMonth[mKey] = { year: d.getFullYear(), month: d.getMonth(), days: {} };
+    if (!byMonth[mKey].days[t.date]) byMonth[mKey].days[t.date] = [];
+    byMonth[mKey].days[t.date].push(t);
+  });
+
+  const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+  let html = '';
+
+  Object.keys(byMonth).sort().reverse().forEach(mKey => {
+    const m = byMonth[mKey];
+    html += `<div class="month-group">`;
+    html += `<div class="month-title">${MONTHS[m.month]} ${m.year}</div>`;
+
+    Object.keys(m.days).sort().reverse().forEach(dateKey => {
+      const d = new Date(dateKey);
+      const diff = Math.round((d - todayDate) / (1000*60*60*24));
+      let label = `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}, ${WEEKDAYS[d.getDay()]}`;
+      let cls = '';
+      if (diff === 0) { label = '📅 Сегодня, ' + label; cls = 'today'; }
+      else if (diff === 1) { label = '🔜 Завтра, ' + label; cls = 'today'; }
+      else if (diff === -1) { label = '⚠️ Вчера, ' + label; cls = 'overdue'; }
+      else if (diff < -1) { label = '🔴 ' + label + ' (просрочено)'; cls = 'overdue'; }
+
+      html += `<div class="day-group">`;
+      html += `<div class="day-title ${cls}">${label}</div>`;
+      m.days[dateKey].forEach(t => {
+        html += `
+          <div class="task ${t.done ? 'done' : ''}">
+            ${t.time ? `<div class="task-time">${t.time}</div>` : ''}
+            <div class="task-text">${escapeHtml(t.text)}</div>
+            <div class="task-actions">
+              <button class="btn-done" onclick="toggleDone(${t.id})">${t.done ? '↩️' : '✅'}</button>
+              <button class="btn-del" onclick="deleteTask(${t.id})">🗑️</button>
+            </div>
+          </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+
+  list.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    render();
+  };
+});
+
+document.getElementById('taskInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') addTask();
+});
+
+render();
+</script>
+</body>
+</html>
