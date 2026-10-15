@@ -1,12 +1,11 @@
-const CACHE_NAME = 'tasks-v1';
+// ИЗМЕНЕНО: tasks-v2 заставит все телефоны скачать новую версию
+const CACHE_NAME = 'tasks-v2';
 const ASSETS = [
-  '/tasks.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/my-tasks/',
+  '/my-tasks/index.html',
+  '/my-tasks/manifest.json'
 ];
 
-// Установка — кэшируем все файлы
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
@@ -14,7 +13,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Активация — чистим старые кэши
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -24,7 +22,6 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Запрос — сначала кэш, потом сеть
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(cached => {

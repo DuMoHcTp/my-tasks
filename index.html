@@ -5,13 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Мои задачи</title>
 
+<!-- PWA мета-теги -->
 <meta name="theme-color" content="#667eea">
-<meta name="description" content="Умный планировщик задач">
+<meta name="description" content="Умный планировщик задач с голосовым вводом">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Задачи">
+<meta name="apple-mobile-web-app-title" content="Мои задачи">
 <link rel="manifest" href="manifest.json">
 
+<!-- Иконки (генерируются JS) -->
 <link rel="icon" type="image/png" sizes="192x192" id="icon192">
 <link rel="apple-touch-icon" sizes="180x180" id="appleIcon">
 
@@ -37,7 +39,7 @@
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     margin-bottom: 20px;
   }
-  .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .input-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   input, button, select {
     padding: 12px 16px;
     border: 2px solid #e0e0e0;
@@ -49,8 +51,8 @@
   }
   input:focus, select:focus { border-color: #667eea; }
   .task-input { flex: 1; min-width: 200px; }
-  .date-input { width: 170px; }
-  .time-input { width: 120px; }
+  .date-input { width: 160px; }
+  .time-input { width: 110px; }
   button {
     background: #667eea;
     color: white;
@@ -59,17 +61,16 @@
     font-weight: 600;
   }
   button:hover { background: #5568d3; transform: translateY(-1px); }
-  .btn-del { background: #ff6b6b; padding: 6px 12px; font-size: 13px; }
-  .btn-done { background: #51cf66; padding: 6px 12px; font-size: 13px; }
-  .btn-edit { background: #ffa94d; padding: 6px 12px; font-size: 13px; }
-
-  /* ========== КНОПКА МИКРОФОНА ========== */
+  
+  /* Кнопки действий */
   .btn-mic {
     background: #667eea;
-    padding: 12px 16px;
+    padding: 12px 14px;
     font-size: 18px;
-    position: relative;
-    min-width: 50px;
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .btn-mic:hover { background: #5568d3; }
   .btn-mic.recording {
@@ -84,50 +85,27 @@
     border-radius: 12px;
     animation: ripple 1.5s infinite;
   }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-  @keyframes ripple {
-    0% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(1.3); }
-  }
-  .btn-mic.unsupported {
-    background: #ccc;
-    cursor: not-allowed;
-  }
+  .btn-mic.unsupported { background: #ccc; cursor: not-allowed; }
   .btn-mic.unsupported:hover { background: #ccc; transform: none; }
+  
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  @keyframes ripple { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.3); } }
 
+  .btn-del { background: #ff6b6b; padding: 6px 12px; font-size: 13px; }
+  .btn-done { background: #51cf66; padding: 6px 12px; font-size: 13px; }
+  .btn-edit { background: #ffa94d; padding: 6px 12px; font-size: 13px; }
+  
   .filters { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-  .filter-btn {
-    background: #f0f0f0;
-    color: #555;
-    padding: 8px 14px;
-    font-size: 13px;
-    border-radius: 20px;
-  }
+  .filter-btn { background: #f0f0f0; color: #555; padding: 8px 14px; font-size: 13px; border-radius: 20px; }
   .filter-btn.active { background: #667eea; color: white; }
+  
   .month-group { margin-bottom: 25px; }
-  .month-title {
-    font-size: 1.3em;
-    color: #667eea;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 2px solid #e0e0e0;
-    text-transform: capitalize;
-  }
+  .month-title { font-size: 1.3em; color: #667eea; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #e0e0e0; text-transform: capitalize; }
   .day-group { margin-bottom: 15px; }
-  .day-title {
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 8px;
-    font-size: 0.95em;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .day-title { font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em; display: flex; align-items: center; gap: 8px; }
   .day-title.today { color: #667eea; font-weight: 700; }
   .day-title.overdue { color: #ff6b6b; }
+  
   .task {
     background: #f8f9ff;
     border-left: 4px solid #667eea;
@@ -142,33 +120,15 @@
   .task:hover { transform: translateX(3px); box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
   .task.done { opacity: 0.5; border-left-color: #51cf66; }
   .task.done .task-text { text-decoration: line-through; }
-  .task-time {
-    background: #667eea;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    min-width: 55px;
-    text-align: center;
-  }
+  .task-time { background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; min-width: 55px; text-align: center; }
   .task-text { flex: 1; font-size: 15px; word-break: break-word; }
   .task-actions { display: flex; gap: 5px; flex-shrink: 0; }
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
-    margin-bottom: 15px;
-  }
-  .stat {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 12px;
-    border-radius: 10px;
-    text-align: center;
-  }
+  
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px; }
+  .stat { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px; border-radius: 10px; text-align: center; }
   .stat-num { font-size: 1.8em; font-weight: 700; }
-  .stat-label { font-size: 0.85em; opacity: 0.9; }
+  .stat-label { font-size: 0.8em; opacity: 0.9; }
+  
   .empty { text-align: center; color: #999; padding: 40px; font-style: italic; }
   .hint { font-size: 12px; color: #888; margin-top: 8px; }
 
@@ -186,22 +146,9 @@
     color: #c92a2a;
   }
   .voice-status.show { display: flex; }
-  .voice-status .dot {
-    width: 10px;
-    height: 10px;
-    background: #ff6b6b;
-    border-radius: 50%;
-    animation: blink 1s infinite;
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-  .voice-interim {
-    color: #888;
-    font-style: italic;
-    margin-left: 4px;
-  }
+  .voice-status .dot { width: 10px; height: 10px; background: #ff6b6b; border-radius: 50%; animation: blink 1s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .voice-interim { color: #888; font-style: italic; margin-left: 4px; }
 
   .install-banner {
     background: linear-gradient(135deg, #51cf66, #37b24d);
@@ -216,20 +163,10 @@
   }
   .install-banner.show { display: flex; }
   .install-banner-text { flex: 1; font-weight: 600; }
-  .install-btn {
-    background: white !important;
-    color: #37b24d !important;
-    padding: 8px 16px !important;
-    font-weight: 700 !important;
-  }
-  .install-close {
-    background: transparent !important;
-    color: white !important;
-    padding: 4px 8px !important;
-    font-size: 20px !important;
-  }
+  .install-btn { background: white !important; color: #37b24d !important; padding: 8px 16px !important; font-weight: 700 !important; }
+  .install-close { background: transparent !important; color: white !important; padding: 4px 8px !important; font-size: 20px !important; }
 
-  /* ========== МОДАЛЬНОЕ ОКНО ========== */
+  /* Модальное окно */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -256,46 +193,16 @@
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     animation: slideUp 0.3s ease;
   }
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #f0f0f0;
-  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0; }
   .modal-title { font-size: 1.3em; font-weight: 700; color: #333; }
-  .modal-close {
-    background: #f0f0f0 !important;
-    color: #666 !important;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 !important;
-  }
+  .modal-close { background: #f0f0f0 !important; color: #666 !important; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 0 !important; }
   .modal-close:hover { background: #e0e0e0 !important; }
   .modal-field { margin-bottom: 15px; }
-  .modal-field label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 6px;
-  }
+  .modal-field label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
   .modal-field input { width: 100%; }
   .modal-row { display: flex; gap: 10px; }
   .modal-row .modal-field { flex: 1; }
-  .modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 2px solid #f0f0f0;
-  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 2px solid #f0f0f0; }
   .modal-actions button { flex: 1; padding: 12px; font-size: 15px; }
   .btn-save { background: #51cf66 !important; }
   .btn-save:hover { background: #40c057 !important; }
@@ -308,6 +215,8 @@
     .task-text { width: 100%; order: 3; margin-top: 5px; }
     .modal { padding: 20px; }
     .modal-row { flex-direction: column; gap: 0; }
+    .input-row { flex-direction: column; align-items: stretch; }
+    .date-input, .time-input { width: 100%; }
   }
 </style>
 </head>
@@ -323,15 +232,13 @@
 
   <div class="card">
     <div class="input-row">
-      <input type="text" id="taskInput" class="task-input" placeholder="Что нужно сделать? (например: завтра в 15:00 купить молоко)">
+      <input type="text" id="taskInput" class="task-input" placeholder="Что нужно сделать? (напр.: завтра в 15:00 купить молоко)">
       <input type="date" id="dateInput" class="date-input">
       <input type="time" id="timeInput" class="time-input">
       <button class="btn-mic" id="micBtn" onclick="toggleVoice()" title="Голосовой ввод">🎤</button>
       <button onclick="addTask()">➕ Добавить</button>
     </div>
-    <div class="hint">💡 Подсказка: пиши дату прямо в тексте — "сегодня", "завтра", "послезавтра", "в понедельник", "15 октября в 18:00". Или нажми 🎤 и продиктуй!</div>
-
-    <!-- Статус голосового ввода -->
+    <div class="hint">💡 Совет: диктуй или пиши "сегодня", "завтра", "в понедельник", "15 октября", "в 15 часов".</div>
     <div class="voice-status" id="voiceStatus">
       <div class="dot"></div>
       <span>🎙️ Слушаю... <span class="voice-interim" id="voiceInterim"></span></span>
@@ -342,8 +249,8 @@
     <div class="stats">
       <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Всего</div></div>
       <div class="stat"><div class="stat-num" id="statToday">0</div><div class="stat-label">Сегодня</div></div>
-      <div class="stat"><div class="stat-num" id="statWeek">0</div><div class="stat-label">На неделе</div></div>
-      <div class="stat"><div class="stat-num" id="statDone">0</div><div class="stat-label">Выполнено</div></div>
+      <div class="stat"><div class="stat-num" id="statWeek">0</div><div class="stat-label">Неделя</div></div>
+      <div class="stat"><div class="stat-num" id="statDone">0</div><div class="stat-label">Готово</div></div>
     </div>
     <div class="filters">
       <button class="filter-btn active" data-filter="all">Все</button>
@@ -351,13 +258,13 @@
       <button class="filter-btn" data-filter="week">Неделя</button>
       <button class="filter-btn" data-filter="month">Месяц</button>
       <button class="filter-btn" data-filter="active">Активные</button>
-      <button class="filter-btn" data-filter="done">Выполненные</button>
+      <button class="filter-btn" data-filter="done">Готовые</button>
     </div>
     <div id="taskList"></div>
   </div>
 </div>
 
-<!-- ========== МОДАЛЬНОЕ ОКНО ========== -->
+<!-- Модальное окно редактирования -->
 <div class="modal-overlay" id="editModal">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
@@ -390,105 +297,68 @@ let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
 let currentFilter = 'all';
 let deferredPrompt = null;
 let editingTaskId = null;
+let recognition = null;
+let isRecording = false;
 
-const MONTHS = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const WEEKDAYS = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
 
 // ========== ГЕНЕРАЦИЯ ИКОНОК ==========
 function generateIcon(size) {
   const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
-
   const gradient = ctx.createLinearGradient(0, 0, size, size);
-  gradient.addColorStop(0, '#667eea');
-  gradient.addColorStop(1, '#764ba2');
+  gradient.addColorStop(0, '#667eea'); gradient.addColorStop(1, '#764ba2');
   ctx.fillStyle = gradient;
-
   const r = size * 0.2;
   ctx.beginPath();
-  ctx.moveTo(r, 0);
-  ctx.lineTo(size - r, 0);
-  ctx.quadraticCurveTo(size, 0, size, r);
-  ctx.lineTo(size, size - r);
-  ctx.quadraticCurveTo(size, size, size - r, size);
-  ctx.lineTo(r, size);
-  ctx.quadraticCurveTo(0, size, 0, size - r);
-  ctx.lineTo(0, r);
-  ctx.quadraticCurveTo(0, 0, r, 0);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.strokeStyle = 'white';
-  ctx.lineWidth = size * 0.12;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(size * 0.25, size * 0.5);
-  ctx.lineTo(size * 0.45, size * 0.7);
-  ctx.lineTo(size * 0.75, size * 0.3);
+  ctx.moveTo(r, 0); ctx.lineTo(size - r, 0); ctx.quadraticCurveTo(size, 0, size, r);
+  ctx.lineTo(size, size - r); ctx.quadraticCurveTo(size, size, size - r, size);
+  ctx.lineTo(r, size); ctx.quadraticCurveTo(0, size, 0, size - r);
+  ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'white'; ctx.lineWidth = size * 0.12; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(size * 0.25, size * 0.5); ctx.lineTo(size * 0.45, size * 0.7); ctx.lineTo(size * 0.75, size * 0.3);
   ctx.stroke();
-
   return canvas.toDataURL('image/png');
 }
-
-const icon192 = generateIcon(192);
-const icon512 = generateIcon(512);
-document.getElementById('icon192').href = icon192;
+document.getElementById('icon192').href = generateIcon(192);
 document.getElementById('appleIcon').href = generateIcon(180);
 
-// ========== PWA ==========
+// ========== PWA И SW ==========
 window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
+  e.preventDefault(); deferredPrompt = e;
   document.getElementById('installBanner').classList.add('show');
 });
-
 window.addEventListener('appinstalled', () => {
-  deferredPrompt = null;
-  document.getElementById('installBanner').classList.remove('show');
+  deferredPrompt = null; document.getElementById('installBanner').classList.remove('show');
 });
-
 function installApp() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(result => {
-      if (result.outcome === 'accepted') console.log('Пользователь согласился');
-      deferredPrompt = null;
-      document.getElementById('installBanner').classList.remove('show');
-    });
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; document.getElementById('installBanner').classList.remove('show'); });
   } else {
-    alert('📱 Чтобы установить приложение:\n\n• На iPhone: нажми "Поделиться" → "На экран «Домой»"\n• На Android: меню браузера (⋮) → "Добавить на главный экран"');
+    alert('📱 Чтобы установить:\n• iPhone: "Поделиться" → "На экран «Домой»"\n• Android: меню (⋮) → "Добавить на главный экран"');
   }
 }
-
-function closeInstall() {
-  document.getElementById('installBanner').classList.remove('show');
-}
+function closeInstall() { document.getElementById('installBanner').classList.remove('show'); }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(() => console.log('✅ Service Worker зарегистрирован'))
-    .catch(err => console.log('SW:', err));
+  navigator.serviceWorker.register('sw.js') // Относительный путь работает везде на GitHub Pages
+    .then(() => console.log('✅ SW зарегистрирован'))
+    .catch(err => console.log('SW ошибка:', err));
 }
 
 // ========== 🎤 ГОЛОСОВОЙ ВВОД ==========
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = null;
-let isRecording = false;
-
 function initVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const micBtn = document.getElementById('micBtn');
 
   if (!SpeechRecognition) {
-    // Браузер не поддерживает
     micBtn.classList.add('unsupported');
-    micBtn.title = 'Голосовой ввод не поддерживается в этом браузере. Используйте Chrome, Safari или Edge.';
-    micBtn.onclick = () => {
-      alert('🎤 Голосовой ввод не поддерживается в этом браузере.\n\nИспользуй:\n• Google Chrome\n• Safari (на iPhone/Mac)\n• Microsoft Edge\n• Яндекс Браузер');
-    };
+    micBtn.title = 'Браузер не поддерживает голосовой ввод';
+    micBtn.onclick = () => alert('⚠️ Ваш браузер не поддерживает Web Speech API.\nИспользуйте Google Chrome, Яндекс Браузер или Safari на iOS.');
     return;
   }
 
@@ -496,74 +366,60 @@ function initVoice() {
   recognition.lang = 'ru-RU';
   recognition.continuous = false;
   recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
 
   recognition.onstart = () => {
     isRecording = true;
     micBtn.classList.add('recording');
     micBtn.textContent = '⏹️';
-    micBtn.title = 'Остановить запись';
     document.getElementById('voiceStatus').classList.add('show');
-    document.getElementById('voiceInterim').textContent = '';
   };
 
   recognition.onresult = (event) => {
-    let interim = '';
-    let final = '';
-
+    let interim = '', final = '';
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        final += transcript;
-      } else {
-        interim += transcript;
-      }
+      if (event.results[i].isFinal) final += transcript;
+      else interim += transcript;
     }
-
-    // Показываем промежуточный результат
     document.getElementById('voiceInterim').textContent = interim;
-
-    // Если есть финальный результат — добавляем в поле
     if (final) {
       const input = document.getElementById('taskInput');
-      // Добавляем с пробелом, если поле не пустое
-      const separator = input.value && !input.value.endsWith(' ') ? ' ' : '';
-      input.value += separator + final;
+      input.value += (input.value && !input.value.endsWith(' ') ? ' ' : '') + final;
       document.getElementById('voiceInterim').textContent = '';
     }
   };
 
   recognition.onerror = (event) => {
-    console.error('Voice error:', event.error);
-    stopVoice();
+  stopVoice();
+  let msg = '🎤 Ошибка: ';
+  if (event.error === 'not-allowed') {
+    msg += 'Доступ к микрофону запрещён.\n\nРазрешите в настройках браузера.';
+  } else if (event.error === 'no-speech') {
+    msg += 'Речь не обнаружена. Говорите громче.';
+  } else if (event.error === 'network') {
+    msg += 'Нет связи с сервером распознавания.\n\n';
+    msg += '⚠️ В России серверы Google заблокированы.\n\n';
+    msg += '✅ РЕШЕНИЯ:\n';
+    msg += '1. Используйте Яндекс Браузер (работает без VPN)\n';
+    msg += '2. Нажмите Win+H для встроенного голосового ввода Windows\n';
+    msg += '3. Включите VPN';
+  } else if (event.error === 'audio-capture') {
+    msg += 'Микрофон не найден. Проверьте подключение.';
+  } else {
+    msg += event.error;
+  }
+  alert(msg);
+};
 
-    let msg = '🎤 Ошибка распознавания голоса:\n\n';
-    switch(event.error) {
-      case 'no-speech': msg += 'Речь не обнаружена. Попробуй ещё раз.'; break;
-      case 'audio-capture': msg += 'Микрофон не найден. Проверь подключение.'; break;
-      case 'not-allowed': msg += 'Доступ к микрофону запрещён.\n\nРазреши в настройках браузера.'; break;
-      case 'network': msg += 'Ошибка сети. Нужен интернет для распознавания.'; break;
-      default: msg += 'Неизвестная ошибка: ' + event.error;
-    }
-    alert(msg);
-  };
-
-  recognition.onend = () => {
-    stopVoice();
-  };
+  recognition.onend = () => stopVoice();
 }
 
 function toggleVoice() {
   if (!recognition) return;
-
-  if (isRecording) {
-    recognition.stop();
-  } else {
-    try {
-      recognition.start();
-    } catch(e) {
-      console.error('Ошибка запуска:', e);
-    }
+  if (isRecording) recognition.stop();
+  else {
+    try { recognition.start(); } 
+    catch(e) { alert('Ошибка запуска микрофона. Обновите страницу.'); }
   }
 }
 
@@ -572,37 +428,39 @@ function stopVoice() {
   const micBtn = document.getElementById('micBtn');
   micBtn.classList.remove('recording');
   micBtn.textContent = '🎤';
-  micBtn.title = 'Голосовой ввод';
   document.getElementById('voiceStatus').classList.remove('show');
 }
 
-// Инициализируем голосовой ввод при загрузке
 initVoice();
 
 // ========== ОСНОВНАЯ ЛОГИКА ==========
 document.getElementById('dateInput').value = '';
 
 function parseDateFromText(text) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
   let date = null, time = null;
   let cleanText = text;
 
-  const timeMatch = text.match(/в\s*(\d{1,2})[:\.](\d{2})/i) || text.match(/(\d{1,2})[:\.](\d{2})/);
+  // 1. Время: "в 15:00", "15.00", "в 15 часов", "15 часов" (частая диктовка Android)
+  let timeMatch = text.match(/(?:в\s+)?(\d{1,2})[:\.](\d{2})/i);
   if (timeMatch) {
     time = { h: parseInt(timeMatch[1]), m: parseInt(timeMatch[2]) };
     cleanText = cleanText.replace(timeMatch[0], '').trim();
+  } else {
+    let hourMatch = text.match(/(?:в\s+)?(\d{1,2})\s+(?:часов|часа)/i);
+    if (hourMatch) {
+      time = { h: parseInt(hourMatch[1]), m: 0 };
+      cleanText = cleanText.replace(hourMatch[0], '').trim();
+    }
   }
 
+  // 2. Дата
   if (/сегодня/i.test(cleanText)) {
-    date = new Date(today);
-    cleanText = cleanText.replace(/сегодня/i, '').trim();
+    date = new Date(today); cleanText = cleanText.replace(/сегодня/i, '').trim();
   } else if (/завтра/i.test(cleanText)) {
-    date = new Date(today); date.setDate(date.getDate() + 1);
-    cleanText = cleanText.replace(/завтра/i, '').trim();
+    date = new Date(today); date.setDate(date.getDate() + 1); cleanText = cleanText.replace(/завтра/i, '').trim();
   } else if (/послезавтра/i.test(cleanText)) {
-    date = new Date(today); date.setDate(date.getDate() + 2);
-    cleanText = cleanText.replace(/послезавтра/i, '').trim();
+    date = new Date(today); date.setDate(date.getDate() + 2); cleanText = cleanText.replace(/послезавтра/i, '').trim();
   } else {
     const dayMatch = cleanText.match(/в\s*(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)/i);
     if (dayMatch) {
@@ -625,7 +483,6 @@ function parseDateFromText(text) {
 
   cleanText = cleanText.replace(/^\s*(в|на|к|по)\s+/i, '').trim();
   cleanText = cleanText.replace(/\s+/g, ' ').trim();
-
   return { text: cleanText, date, time };
 }
 
@@ -633,107 +490,58 @@ function addTask() {
   const rawText = document.getElementById('taskInput').value.trim();
   const dateVal = document.getElementById('dateInput').value;
   const timeVal = document.getElementById('timeInput').value;
-
   if (!rawText) { alert('Введите задачу!'); return; }
 
   const parsed = parseDateFromText(rawText);
+  // Приоритет: дата из текста > дата из поля > сегодня
   let finalDate = parsed.date ? formatDate(parsed.date) : (dateVal || formatDate(new Date()));
   let finalTime = timeVal || (parsed.time ? `${String(parsed.time.h).padStart(2,'0')}:${String(parsed.time.m).padStart(2,'0')}` : '');
 
-  tasks.push({
-    id: Date.now(),
-    text: parsed.text || rawText,
-    date: finalDate,
-    time: finalTime,
-    done: false,
-    created: Date.now()
-  });
-
-  save();
-  render();
-
+  tasks.push({ id: Date.now(), text: parsed.text || rawText, date: finalDate, time: finalTime, done: false, created: Date.now() });
+  save(); render();
   document.getElementById('taskInput').value = '';
   document.getElementById('timeInput').value = '';
   document.getElementById('taskInput').focus();
 }
 
-function formatDate(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function toggleDone(id) {
-  const t = tasks.find(t => t.id === id);
-  if (t) { t.done = !t.done; save(); render(); }
-}
-
-function deleteTask(id) {
-  if (!confirm('Удалить задачу?')) return;
-  tasks = tasks.filter(t => t.id !== id);
-  save(); render();
-}
+function formatDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function toggleDone(id) { const t = tasks.find(t => t.id === id); if (t) { t.done = !t.done; save(); render(); } }
+function deleteTask(id) { if (confirm('Удалить задачу?')) { tasks = tasks.filter(t => t.id !== id); save(); render(); } }
+function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
 
 // ========== РЕДАКТИРОВАНИЕ ==========
 function openEdit(id) {
-  const task = tasks.find(t => t.id === id);
-  if (!task) return;
-
+  const task = tasks.find(t => t.id === id); if (!task) return;
   editingTaskId = id;
   document.getElementById('editText').value = task.text;
   document.getElementById('editDate').value = task.date;
   document.getElementById('editTime').value = task.time || '';
-
   document.getElementById('editModal').classList.add('show');
   setTimeout(() => document.getElementById('editText').focus(), 100);
 }
-
-function closeEdit() {
-  document.getElementById('editModal').classList.remove('show');
-  editingTaskId = null;
-}
-
+function closeEdit() { document.getElementById('editModal').classList.remove('show'); editingTaskId = null; }
 function saveEdit() {
   if (editingTaskId === null) return;
-
   const newText = document.getElementById('editText').value.trim();
   const newDate = document.getElementById('editDate').value;
   const newTime = document.getElementById('editTime').value;
-
-  if (!newText) { alert('Введите текст задачи!'); return; }
-  if (!newDate) { alert('Выберите дату!'); return; }
-
+  if (!newText || !newDate) { alert('Заполните текст и дату!'); return; }
+  
   const task = tasks.find(t => t.id === editingTaskId);
-  if (task) {
-    task.text = newText;
-    task.date = newDate;
-    task.time = newTime;
-    save();
-    render();
-    closeEdit();
-  }
+  if (task) { task.text = newText; task.date = newDate; task.time = newTime; save(); render(); closeEdit(); }
 }
 
-document.getElementById('editModal').addEventListener('click', (e) => {
-  if (e.target.id === 'editModal') closeEdit();
-});
-
+document.getElementById('editModal').addEventListener('click', (e) => { if (e.target.id === 'editModal') closeEdit(); });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (editingTaskId !== null) closeEdit();
-    if (isRecording) recognition.stop();
-  }
+  if (e.key === 'Escape') { if (editingTaskId !== null) closeEdit(); if (isRecording) recognition.stop(); }
 });
+document.getElementById('editText').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveEdit(); });
 
-document.getElementById('editText').addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') saveEdit();
-});
-
-function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
-
+// ========== ОТРИСОВКА ==========
 function getFiltered() {
   const today = new Date(); today.setHours(0,0,0,0);
   const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
   const monthEnd = new Date(today); monthEnd.setMonth(monthEnd.getMonth() + 1);
-
   return tasks.filter(t => {
     const d = new Date(t.date);
     if (currentFilter === 'today') return t.date === formatDate(today);
@@ -752,20 +560,14 @@ function render() {
     return (a.time || '99:99').localeCompare(b.time || '99:99');
   });
 
-  const today = formatDate(new Date());
+  const todayStr = formatDate(new Date());
   const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7);
   document.getElementById('statTotal').textContent = tasks.length;
-  document.getElementById('statToday').textContent = tasks.filter(t => t.date === today && !t.done).length;
-  document.getElementById('statWeek').textContent = tasks.filter(t => {
-    const d = new Date(t.date); const now = new Date();
-    return d >= now && d < weekEnd && !t.done;
-  }).length;
+  document.getElementById('statToday').textContent = tasks.filter(t => t.date === todayStr && !t.done).length;
+  document.getElementById('statWeek').textContent = tasks.filter(t => { const d = new Date(t.date); const now = new Date(); return d >= now && d < weekEnd && !t.done; }).length;
   document.getElementById('statDone').textContent = tasks.filter(t => t.done).length;
 
-  if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty">🌟 Задач нет. Самое время добавить первую!</div>';
-    return;
-  }
+  if (filtered.length === 0) { list.innerHTML = '<div class="empty">🌟 Задач нет. Самое время добавить первую!</div>'; return; }
 
   const byMonth = {};
   filtered.forEach(t => {
@@ -781,9 +583,7 @@ function render() {
 
   Object.keys(byMonth).sort().reverse().forEach(mKey => {
     const m = byMonth[mKey];
-    html += `<div class="month-group">`;
-    html += `<div class="month-title">${MONTHS[m.month]} ${m.year}</div>`;
-
+    html += `<div class="month-group"><div class="month-title">${MONTHS_GEN[m.month]} ${m.year}</div>`;
     Object.keys(m.days).sort().reverse().forEach(dateKey => {
       const d = new Date(dateKey);
       const diff = Math.round((d - todayDate) / (1000*60*60*24));
@@ -794,44 +594,34 @@ function render() {
       else if (diff === -1) { label = '⚠️ Вчера, ' + label; cls = 'overdue'; }
       else if (diff < -1) { label = '🔴 ' + label + ' (просрочено)'; cls = 'overdue'; }
 
-      html += `<div class="day-group">`;
-      html += `<div class="day-title ${cls}">${label}</div>`;
+      html += `<div class="day-group"><div class="day-title ${cls}">${label}</div>`;
       m.days[dateKey].forEach(t => {
-        html += `
-          <div class="task ${t.done ? 'done' : ''}">
-            ${t.time ? `<div class="task-time">${t.time}</div>` : ''}
-            <div class="task-text">${escapeHtml(t.text)}</div>
-            <div class="task-actions">
-              <button class="btn-edit" onclick="openEdit(${t.id})" title="Редактировать">✏️</button>
-              <button class="btn-done" onclick="toggleDone(${t.id})" title="${t.done ? 'Вернуть' : 'Выполнено'}">${t.done ? '↩️' : '✅'}</button>
-              <button class="btn-del" onclick="deleteTask(${t.id})" title="Удалить">🗑️</button>
-            </div>
-          </div>`;
+        html += `<div class="task ${t.done ? 'done' : ''}">
+          ${t.time ? `<div class="task-time">${t.time}</div>` : ''}
+          <div class="task-text">${escapeHtml(t.text)}</div>
+          <div class="task-actions">
+            <button class="btn-edit" onclick="openEdit(${t.id})" title="Редактировать">✏️</button>
+            <button class="btn-done" onclick="toggleDone(${t.id})" title="${t.done ? 'Вернуть' : 'Выполнено'}">${t.done ? '↩️' : '✅'}</button>
+            <button class="btn-del" onclick="deleteTask(${t.id})" title="Удалить">🗑️</button>
+          </div>
+        </div>`;
       });
       html += `</div>`;
     });
     html += `</div>`;
   });
-
   list.innerHTML = html;
 }
 
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentFilter = btn.dataset.filter;
-    render();
+    btn.classList.add('active'); currentFilter = btn.dataset.filter; render();
   };
 });
-
-document.getElementById('taskInput').addEventListener('keypress', e => {
-  if (e.key === 'Enter') addTask();
-});
+document.getElementById('taskInput').addEventListener('keypress', e => { if (e.key === 'Enter') addTask(); });
 
 render();
 </script>
