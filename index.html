@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Мои задачи</title>
 
-<!-- PWA мета-теги -->
 <meta name="theme-color" content="#667eea">
 <meta name="description" content="Умный планировщик задач">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +12,6 @@
 <meta name="apple-mobile-web-app-title" content="Задачи">
 <link rel="manifest" href="manifest.json">
 
-<!-- Иконки (генерируются через canvas ниже) -->
 <link rel="icon" type="image/png" sizes="192x192" id="icon192">
 <link rel="apple-touch-icon" sizes="180x180" id="appleIcon">
 
@@ -27,7 +25,6 @@
     color: #333;
     -webkit-tap-highlight-color: transparent;
   }
-  /* Для iOS safe area */
   @supports (padding: max(0px)) {
     body { padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
   }
@@ -48,6 +45,7 @@
     font-size: 15px;
     outline: none;
     transition: all 0.2s;
+    font-family: inherit;
   }
   input:focus, select:focus { border-color: #667eea; }
   .task-input { flex: 1; min-width: 200px; }
@@ -63,6 +61,43 @@
   button:hover { background: #5568d3; transform: translateY(-1px); }
   .btn-del { background: #ff6b6b; padding: 6px 12px; font-size: 13px; }
   .btn-done { background: #51cf66; padding: 6px 12px; font-size: 13px; }
+  .btn-edit { background: #ffa94d; padding: 6px 12px; font-size: 13px; }
+
+  /* ========== КНОПКА МИКРОФОНА ========== */
+  .btn-mic {
+    background: #667eea;
+    padding: 12px 16px;
+    font-size: 18px;
+    position: relative;
+    min-width: 50px;
+  }
+  .btn-mic:hover { background: #5568d3; }
+  .btn-mic.recording {
+    background: #ff6b6b;
+    animation: pulse 1.2s infinite;
+  }
+  .btn-mic.recording::after {
+    content: '';
+    position: absolute;
+    top: -4px; left: -4px; right: -4px; bottom: -4px;
+    border: 3px solid #ff6b6b;
+    border-radius: 12px;
+    animation: ripple 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  @keyframes ripple {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.3); }
+  }
+  .btn-mic.unsupported {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  .btn-mic.unsupported:hover { background: #ccc; transform: none; }
+
   .filters { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
   .filter-btn {
     background: #f0f0f0;
@@ -117,8 +152,8 @@
     min-width: 55px;
     text-align: center;
   }
-  .task-text { flex: 1; font-size: 15px; }
-  .task-actions { display: flex; gap: 5px; }
+  .task-text { flex: 1; font-size: 15px; word-break: break-word; }
+  .task-actions { display: flex; gap: 5px; flex-shrink: 0; }
   .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -137,7 +172,37 @@
   .empty { text-align: center; color: #999; padding: 40px; font-style: italic; }
   .hint { font-size: 12px; color: #888; margin-top: 8px; }
 
-  /* Кнопка установки PWA */
+  /* Статус голосового ввода */
+  .voice-status {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #fff3f3;
+    border-left: 4px solid #ff6b6b;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #c92a2a;
+  }
+  .voice-status.show { display: flex; }
+  .voice-status .dot {
+    width: 10px;
+    height: 10px;
+    background: #ff6b6b;
+    border-radius: 50%;
+    animation: blink 1s infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .voice-interim {
+    color: #888;
+    font-style: italic;
+    margin-left: 4px;
+  }
+
   .install-banner {
     background: linear-gradient(135deg, #51cf66, #37b24d);
     color: white;
@@ -163,13 +228,93 @@
     padding: 4px 8px !important;
     font-size: 20px !important;
   }
+
+  /* ========== МОДАЛЬНОЕ ОКНО ========== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-overlay.show { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+  .modal-title { font-size: 1.3em; font-weight: 700; color: #333; }
+  .modal-close {
+    background: #f0f0f0 !important;
+    color: #666 !important;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+  }
+  .modal-close:hover { background: #e0e0e0 !important; }
+  .modal-field { margin-bottom: 15px; }
+  .modal-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+  }
+  .modal-field input { width: 100%; }
+  .modal-row { display: flex; gap: 10px; }
+  .modal-row .modal-field { flex: 1; }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #f0f0f0;
+  }
+  .modal-actions button { flex: 1; padding: 12px; font-size: 15px; }
+  .btn-save { background: #51cf66 !important; }
+  .btn-save:hover { background: #40c057 !important; }
+  .btn-cancel { background: #f0f0f0 !important; color: #555 !important; }
+  .btn-cancel:hover { background: #e0e0e0 !important; }
+
+  @media (max-width: 600px) {
+    .task-actions { flex-wrap: wrap; }
+    .task { flex-wrap: wrap; }
+    .task-text { width: 100%; order: 3; margin-top: 5px; }
+    .modal { padding: 20px; }
+    .modal-row { flex-direction: column; gap: 0; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>📋 Мои задачи</h1>
 
-  <!-- Баннер установки PWA -->
   <div class="install-banner" id="installBanner">
     <div class="install-banner-text">📱 Установить как приложение?</div>
     <button class="install-btn" onclick="installApp()">Установить</button>
@@ -181,9 +326,16 @@
       <input type="text" id="taskInput" class="task-input" placeholder="Что нужно сделать? (например: завтра в 15:00 купить молоко)">
       <input type="date" id="dateInput" class="date-input">
       <input type="time" id="timeInput" class="time-input">
+      <button class="btn-mic" id="micBtn" onclick="toggleVoice()" title="Голосовой ввод">🎤</button>
       <button onclick="addTask()">➕ Добавить</button>
     </div>
-    <div class="hint">💡 Подсказка: пиши дату прямо в тексте — "сегодня", "завтра", "послезавтра", "в понедельник", "15 октября в 18:00"</div>
+    <div class="hint">💡 Подсказка: пиши дату прямо в тексте — "сегодня", "завтра", "послезавтра", "в понедельник", "15 октября в 18:00". Или нажми 🎤 и продиктуй!</div>
+
+    <!-- Статус голосового ввода -->
+    <div class="voice-status" id="voiceStatus">
+      <div class="dot"></div>
+      <span>🎙️ Слушаю... <span class="voice-interim" id="voiceInterim"></span></span>
+    </div>
   </div>
 
   <div class="card">
@@ -205,10 +357,39 @@
   </div>
 </div>
 
+<!-- ========== МОДАЛЬНОЕ ОКНО ========== -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Редактировать задачу</div>
+      <button class="modal-close" onclick="closeEdit()">×</button>
+    </div>
+    <div class="modal-field">
+      <label>Что нужно сделать?</label>
+      <input type="text" id="editText" placeholder="Текст задачи">
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>📅 Дата</label>
+        <input type="date" id="editDate">
+      </div>
+      <div class="modal-field">
+        <label>🕐 Время</label>
+        <input type="time" id="editTime">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEdit()">Отмена</button>
+      <button class="btn-save" onclick="saveEdit()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
 let currentFilter = 'all';
 let deferredPrompt = null;
+let editingTaskId = null;
 
 const MONTHS = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
@@ -221,13 +402,11 @@ function generateIcon(size) {
   canvas.height = size;
   const ctx = canvas.getContext('2d');
 
-  // Градиентный фон
   const gradient = ctx.createLinearGradient(0, 0, size, size);
   gradient.addColorStop(0, '#667eea');
   gradient.addColorStop(1, '#764ba2');
   ctx.fillStyle = gradient;
 
-  // Скруглённый прямоугольник
   const r = size * 0.2;
   ctx.beginPath();
   ctx.moveTo(r, 0);
@@ -242,7 +421,6 @@ function generateIcon(size) {
   ctx.closePath();
   ctx.fill();
 
-  // Галочка
   ctx.strokeStyle = 'white';
   ctx.lineWidth = size * 0.12;
   ctx.lineCap = 'round';
@@ -256,13 +434,12 @@ function generateIcon(size) {
   return canvas.toDataURL('image/png');
 }
 
-// Устанавливаем иконки
 const icon192 = generateIcon(192);
 const icon512 = generateIcon(512);
 document.getElementById('icon192').href = icon192;
 document.getElementById('appleIcon').href = generateIcon(180);
 
-// ========== PWA УСТАНОВКА ==========
+// ========== PWA ==========
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
@@ -272,7 +449,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
 window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
   document.getElementById('installBanner').classList.remove('show');
-  console.log('✅ PWA установлено!');
 });
 
 function installApp() {
@@ -284,7 +460,6 @@ function installApp() {
       document.getElementById('installBanner').classList.remove('show');
     });
   } else {
-    // Для iOS — показываем инструкцию
     alert('📱 Чтобы установить приложение:\n\n• На iPhone: нажми "Поделиться" → "На экран «Домой»"\n• На Android: меню браузера (⋮) → "Добавить на главный экран"');
   }
 }
@@ -293,15 +468,119 @@ function closeInstall() {
   document.getElementById('installBanner').classList.remove('show');
 }
 
-// ========== РЕГИСТРАЦИЯ SERVICE WORKER ==========
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
-    .then(reg => console.log('✅ Service Worker зарегистрирован'))
-    .catch(err => console.log('❌ Ошибка SW:', err));
+    .then(() => console.log('✅ Service Worker зарегистрирован'))
+    .catch(err => console.log('SW:', err));
 }
 
+// ========== 🎤 ГОЛОСОВОЙ ВВОД ==========
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isRecording = false;
+
+function initVoice() {
+  const micBtn = document.getElementById('micBtn');
+
+  if (!SpeechRecognition) {
+    // Браузер не поддерживает
+    micBtn.classList.add('unsupported');
+    micBtn.title = 'Голосовой ввод не поддерживается в этом браузере. Используйте Chrome, Safari или Edge.';
+    micBtn.onclick = () => {
+      alert('🎤 Голосовой ввод не поддерживается в этом браузере.\n\nИспользуй:\n• Google Chrome\n• Safari (на iPhone/Mac)\n• Microsoft Edge\n• Яндекс Браузер');
+    };
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ru-RU';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    micBtn.classList.add('recording');
+    micBtn.textContent = '⏹️';
+    micBtn.title = 'Остановить запись';
+    document.getElementById('voiceStatus').classList.add('show');
+    document.getElementById('voiceInterim').textContent = '';
+  };
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    let final = '';
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        final += transcript;
+      } else {
+        interim += transcript;
+      }
+    }
+
+    // Показываем промежуточный результат
+    document.getElementById('voiceInterim').textContent = interim;
+
+    // Если есть финальный результат — добавляем в поле
+    if (final) {
+      const input = document.getElementById('taskInput');
+      // Добавляем с пробелом, если поле не пустое
+      const separator = input.value && !input.value.endsWith(' ') ? ' ' : '';
+      input.value += separator + final;
+      document.getElementById('voiceInterim').textContent = '';
+    }
+  };
+
+  recognition.onerror = (event) => {
+    console.error('Voice error:', event.error);
+    stopVoice();
+
+    let msg = '🎤 Ошибка распознавания голоса:\n\n';
+    switch(event.error) {
+      case 'no-speech': msg += 'Речь не обнаружена. Попробуй ещё раз.'; break;
+      case 'audio-capture': msg += 'Микрофон не найден. Проверь подключение.'; break;
+      case 'not-allowed': msg += 'Доступ к микрофону запрещён.\n\nРазреши в настройках браузера.'; break;
+      case 'network': msg += 'Ошибка сети. Нужен интернет для распознавания.'; break;
+      default: msg += 'Неизвестная ошибка: ' + event.error;
+    }
+    alert(msg);
+  };
+
+  recognition.onend = () => {
+    stopVoice();
+  };
+}
+
+function toggleVoice() {
+  if (!recognition) return;
+
+  if (isRecording) {
+    recognition.stop();
+  } else {
+    try {
+      recognition.start();
+    } catch(e) {
+      console.error('Ошибка запуска:', e);
+    }
+  }
+}
+
+function stopVoice() {
+  isRecording = false;
+  const micBtn = document.getElementById('micBtn');
+  micBtn.classList.remove('recording');
+  micBtn.textContent = '🎤';
+  micBtn.title = 'Голосовой ввод';
+  document.getElementById('voiceStatus').classList.remove('show');
+}
+
+// Инициализируем голосовой ввод при загрузке
+initVoice();
+
 // ========== ОСНОВНАЯ ЛОГИКА ==========
-document.getElementById('dateInput').valueAsDate = new Date();
+document.getElementById('dateInput').value = '';
 
 function parseDateFromText(text) {
   const today = new Date();
@@ -358,7 +637,7 @@ function addTask() {
   if (!rawText) { alert('Введите задачу!'); return; }
 
   const parsed = parseDateFromText(rawText);
-  let finalDate = dateVal || (parsed.date ? formatDate(parsed.date) : formatDate(new Date()));
+  let finalDate = parsed.date ? formatDate(parsed.date) : (dateVal || formatDate(new Date()));
   let finalTime = timeVal || (parsed.time ? `${String(parsed.time.h).padStart(2,'0')}:${String(parsed.time.m).padStart(2,'0')}` : '');
 
   tasks.push({
@@ -392,6 +671,61 @@ function deleteTask(id) {
   tasks = tasks.filter(t => t.id !== id);
   save(); render();
 }
+
+// ========== РЕДАКТИРОВАНИЕ ==========
+function openEdit(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+
+  editingTaskId = id;
+  document.getElementById('editText').value = task.text;
+  document.getElementById('editDate').value = task.date;
+  document.getElementById('editTime').value = task.time || '';
+
+  document.getElementById('editModal').classList.add('show');
+  setTimeout(() => document.getElementById('editText').focus(), 100);
+}
+
+function closeEdit() {
+  document.getElementById('editModal').classList.remove('show');
+  editingTaskId = null;
+}
+
+function saveEdit() {
+  if (editingTaskId === null) return;
+
+  const newText = document.getElementById('editText').value.trim();
+  const newDate = document.getElementById('editDate').value;
+  const newTime = document.getElementById('editTime').value;
+
+  if (!newText) { alert('Введите текст задачи!'); return; }
+  if (!newDate) { alert('Выберите дату!'); return; }
+
+  const task = tasks.find(t => t.id === editingTaskId);
+  if (task) {
+    task.text = newText;
+    task.date = newDate;
+    task.time = newTime;
+    save();
+    render();
+    closeEdit();
+  }
+}
+
+document.getElementById('editModal').addEventListener('click', (e) => {
+  if (e.target.id === 'editModal') closeEdit();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (editingTaskId !== null) closeEdit();
+    if (isRecording) recognition.stop();
+  }
+});
+
+document.getElementById('editText').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') saveEdit();
+});
 
 function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
 
@@ -468,8 +802,9 @@ function render() {
             ${t.time ? `<div class="task-time">${t.time}</div>` : ''}
             <div class="task-text">${escapeHtml(t.text)}</div>
             <div class="task-actions">
-              <button class="btn-done" onclick="toggleDone(${t.id})">${t.done ? '↩️' : '✅'}</button>
-              <button class="btn-del" onclick="deleteTask(${t.id})">🗑️</button>
+              <button class="btn-edit" onclick="openEdit(${t.id})" title="Редактировать">✏️</button>
+              <button class="btn-done" onclick="toggleDone(${t.id})" title="${t.done ? 'Вернуть' : 'Выполнено'}">${t.done ? '↩️' : '✅'}</button>
+              <button class="btn-del" onclick="deleteTask(${t.id})" title="Удалить">🗑️</button>
             </div>
           </div>`;
       });
