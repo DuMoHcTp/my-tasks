@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tasks-v6-smart-parse';
+const CACHE_NAME = 'tasks-v8-version';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', event => {

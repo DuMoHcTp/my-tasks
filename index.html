@@ -417,6 +417,53 @@
   .notification-banner-text { flex: 1; font-weight: 600; font-size: 14px; }
   .notification-btn { background: white !important; color: var(--warning) !important; padding: 8px 16px !important; font-weight: 700 !important; font-size: 13px !important; }
 
+  /* ========== ФУТЕР С ВЕРСИЕЙ ========== */
+  .app-footer {
+    text-align: center;
+    padding: 20px 10px 30px;
+    margin-top: 10px;
+  }
+  .version-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    user-select: none;
+  }
+  .version-badge:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+  .version-badge:active { transform: translateY(0); }
+  .version-badge svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.9;
+  }
+  .version-number {
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .version-separator {
+    opacity: 0.5;
+  }
+  .version-date {
+    opacity: 0.85;
+    font-size: 12px;
+  }
+
+  /* ========== МОДАЛЬНОЕ ОКНО changelog ========== */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -473,6 +520,60 @@
   .btn-cancel { background: var(--bg-soft) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
   .btn-cancel:hover { background: var(--border) !important; }
 
+  /* ========== CHANGELOG ========== */
+  .changelog-version {
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .changelog-version:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .changelog-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .changelog-tag {
+    background: linear-gradient(135deg, var(--primary), var(--accent-2));
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .changelog-tag.current {
+    background: linear-gradient(135deg, var(--success), #059669);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+  .changelog-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .changelog-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  .changelog-list li {
+    padding: 6px 0 6px 22px;
+    position: relative;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .changelog-list li::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 13px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+  }
+
   @media (max-width: 600px) {
     body { padding: 12px; }
     h1 { font-size: 1.4em; }
@@ -490,6 +591,7 @@
     .modal-actions button { flex: 1 1 100%; }
     .stat { padding: 14px 10px; }
     .stat-num { font-size: 1.6em; }
+    .version-badge { font-size: 12px; padding: 7px 14px; }
   }
 </style>
 </head>
@@ -593,8 +695,23 @@
     </div>
     <div id="taskList"></div>
   </div>
+
+  <!-- ========== ФУТЕР С ВЕРСИЕЙ ========== -->
+  <footer class="app-footer">
+    <button class="version-badge" onclick="openChangelog()" title="Нажми, чтобы посмотреть историю версий">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span class="version-number">v1.0</span>
+      <span class="version-separator">·</span>
+      <span class="version-date">26.10.2026, 15:00</span>
+    </button>
+  </footer>
 </div>
 
+<!-- ========== МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ ========== -->
 <div class="modal-overlay" id="editModal">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
@@ -646,6 +763,28 @@
   </div>
 </div>
 
+<!-- ========== МОДАЛЬНОЕ ОКНО CHANGELOG ========== -->
+<div class="modal-overlay" id="changelogModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        История версий
+      </div>
+      <button class="modal-close" onclick="closeChangelog()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div id="changelogContent"></div>
+  </div>
+</div>
+
 <script>
 let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
 let currentFilter = 'all';
@@ -655,9 +794,62 @@ let recognition = null;
 let isRecording = false;
 let notificationTimers = {};
 
-const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-const MONTHS_NOM = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
-const WEEKDAYS = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+// ========== 🏷️ ИНФОРМАЦИЯ О ВЕРСИИ ==========
+const APP_VERSION = '1.0';
+const APP_VERSION_DATE = '26.10.2026, 15:00';
+
+const CHANGELOG = [
+  {
+    version: '1.0',
+    date: '26.10.2026, 15:00',
+    current: true,
+    changes: [
+      'Индикатор версии приложения в футере',
+      'История изменений (changelog) по клику на версию',
+      'Умный парсер: распознавание дат "27.10", "завтра", "в субботу"',
+      'Распознавание интервалов времени "12:15 - 14:00"',
+      'Создание нескольких задач из одного текста',
+      'Голосовой ввод через микрофон',
+      'Экспорт задач в календарь (.ics)',
+      'Локальные уведомления за 15 минут до задачи',
+      'Современный дизайн с градиентами и glassmorphism',
+      'Тёмная тема с переключателем',
+      'Редактирование задач в модальном окне',
+      'PWA-версия для установки на телефон',
+      'Хронологический порядок задач (от прошлых к будущим)',
+      'Группировка по месяцам и дням',
+      'Фильтры: сегодня, неделя, месяц, активные, готовые',
+      'Статистика задач в реальном времени',
+      'Офлайн-работа через Service Worker'
+    ]
+  }
+];
+
+function openChangelog() {
+  const content = document.getElementById('changelogContent');
+  let html = '';
+  CHANGELOG.forEach(v => {
+    html += `<div class="changelog-version">
+      <div class="changelog-header">
+        <span class="changelog-tag ${v.current ? 'current' : ''}">v${v.version}${v.current ? ' · текущая' : ''}</span>
+        <span class="changelog-date">${v.date}</span>
+      </div>
+      <ul class="changelog-list">
+        ${v.changes.map(c => `<li>${c}</li>`).join('')}
+      </ul>
+    </div>`;
+  });
+  content.innerHTML = html;
+  document.getElementById('changelogModal').classList.add('show');
+}
+
+function closeChangelog() {
+  document.getElementById('changelogModal').classList.remove('show');
+}
+
+document.getElementById('changelogModal').addEventListener('click', (e) => {
+  if (e.target.id === 'changelogModal') closeChangelog();
+});
 
 // ========== ТЕМА ==========
 function initTheme() {
@@ -864,31 +1056,29 @@ initVoice();
 
 document.getElementById('dateInput').value = '';
 
-// ========== 🆕 УЛУЧШЕННЫЙ ПАРСИНГ ==========
+// ========== ПАРСИНГ ==========
+const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MONTHS_NOM = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const WEEKDAYS = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
 
-// Нормализация текста после голосового ввода
 function normalizeVoiceText(text) {
   let t = text;
-  // Заменяем голосовые артефакты на символы
   t = t.replace(/\s*точка\s*/gi, '.');
   t = t.replace(/\s*тире\s*/gi, '-');
   t = t.replace(/\s*двоеточие\s*/gi, ':');
   t = t.replace(/\s*минус\s*/gi, '-');
   t = t.replace(/\s*слэш\s*/gi, '/');
   t = t.replace(/\s*подчеркивание\s*/gi, '_');
-  // Убираем лишние пробелы вокруг символов
   t = t.replace(/\s+([.:;,\-\/])/g, '$1');
   t = t.replace(/([.:;,\-\/])\s+/g, '$1');
   return t;
 }
 
-// Парсит ОДНО событие из текста. Возвращает {date, timeStart, timeEnd, text}
 function parseSingleEvent(text) {
   const today = new Date(); today.setHours(0,0,0,0);
   let date = null, timeStart = null, timeEnd = null;
   let cleanText = text;
 
-  // 1. Интервал времени: "12:15 - 14:00", "12:15-14:00", "с 12 до 14"
   let intervalMatch = cleanText.match(/(\d{1,2})[:\.](\d{2})\s*[-–—]\s*(\d{1,2})[:\.](\d{2})/);
   if (intervalMatch) {
     timeStart = { h: parseInt(intervalMatch[1]), m: parseInt(intervalMatch[2]) };
@@ -901,7 +1091,6 @@ function parseSingleEvent(text) {
       timeEnd = { h: parseInt(intervalWords[3]), m: intervalWords[4] ? parseInt(intervalWords[4]) : 0 };
       cleanText = cleanText.replace(intervalWords[0], '').trim();
     } else {
-      // Одиночное время
       let timeMatch = cleanText.match(/(?:в\s+)?(\d{1,2})[:\.](\d{2})/i);
       if (timeMatch) {
         timeStart = { h: parseInt(timeMatch[1]), m: parseInt(timeMatch[2]) };
@@ -916,7 +1105,6 @@ function parseSingleEvent(text) {
     }
   }
 
-  // 2. Дата в формате ДД.ММ или ДД.ММ.ГГГГ или ДД/ММ или ДД-ММ
   let dateNumMatch = cleanText.match(/(\d{1,2})[.\/\-](\d{1,2})(?:[.\/\-](\d{2,4}))?/);
   if (dateNumMatch) {
     const day = parseInt(dateNumMatch[1]);
@@ -927,13 +1115,11 @@ function parseSingleEvent(text) {
       if (year < 100) year += 2000;
     }
     date = new Date(year, month, day);
-    // Если дата в прошлом и год не указан — берём следующий год
     if (!dateNumMatch[3] && date < today) {
       date.setFullYear(date.getFullYear() + 1);
     }
     cleanText = cleanText.replace(dateNumMatch[0], '').trim();
   } else {
-    // Дата словами
     if (/сегодня/i.test(cleanText)) {
       date = new Date(today); cleanText = cleanText.replace(/сегодня/i, '').trim();
     } else if (/послезавтра/i.test(cleanText)) {
@@ -966,44 +1152,29 @@ function parseSingleEvent(text) {
   return { text: cleanText, date, timeStart, timeEnd };
 }
 
-// Парсит НЕСКОЛЬКО событий из текста
 function parseMultipleTasks(text) {
   const normalized = normalizeVoiceText(text);
-  
-  // Паттерн для поиска даты: "27.10", "27/10", "27-10", "27 октября", "завтра", "в субботу" и т.д.
-  // Ищем все вхождения дат в тексте
   const datePatterns = [
-    /(\d{1,2})[.\/\-](\d{1,2})(?:[.\/\-](\d{2,4}))?/g, // 27.10, 27/10, 27.10.2026
-    /(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)/gi, // 27 октября
+    /(\d{1,2})[.\/\-](\d{1,2})(?:[.\/\-](\d{2,4}))?/g,
+    /(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)/gi,
     /(сегодня|завтра|послезавтра)/gi,
     /(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)/gi
   ];
 
-  // Находим все позиции дат в тексте
   const datePositions = [];
-  
   datePatterns.forEach(pattern => {
     let match;
     const regex = new RegExp(pattern.source, pattern.flags);
     while ((match = regex.exec(normalized)) !== null) {
-      datePositions.push({
-        index: match.index,
-        length: match[0].length,
-        text: match[0]
-      });
+      datePositions.push({ index: match.index, length: match[0].length, text: match[0] });
     }
   });
 
-  // Если дат не найдено — одно событие на сегодня
   if (datePositions.length === 0) {
-    const parsed = parseSingleEvent(normalized);
-    return [parsed];
+    return [parseSingleEvent(normalized)];
   }
 
-  // Сортируем по позиции
   datePositions.sort((a, b) => a.index - b.index);
-
-  // Разбиваем текст на сегменты по датам
   const segments = [];
   for (let i = 0; i < datePositions.length; i++) {
     const start = datePositions[i].index;
@@ -1011,48 +1182,36 @@ function parseMultipleTasks(text) {
     segments.push(normalized.substring(start, end).trim());
   }
 
-  // Парсим каждый сегмент
   const results = [];
   segments.forEach(segment => {
     const parsed = parseSingleEvent(segment);
-    if (parsed.text || parsed.date || parsed.timeStart) {
-      results.push(parsed);
-    }
+    if (parsed.text || parsed.date || parsed.timeStart) results.push(parsed);
   });
 
   return results.length > 0 ? results : [parseSingleEvent(normalized)];
 }
 
-// ========== ДОБАВЛЕНИЕ ЗАДАЧ ==========
 function addTask() {
   const rawText = document.getElementById('taskInput').value.trim();
   const dateVal = document.getElementById('dateInput').value;
   const timeVal = document.getElementById('timeInput').value;
   if (!rawText) { alert('Введите задачу!'); return; }
 
-  // Парсим все события из текста
   const parsedEvents = parseMultipleTasks(rawText);
-  
   let tasksCreated = 0;
   
   parsedEvents.forEach(parsed => {
-    // Если у события нет даты, используем дату из поля или сегодня
     let finalDate = parsed.date ? formatDate(parsed.date) : (dateVal || formatDate(new Date()));
-    
-    // Если у события нет времени, используем время из поля
     let finalTime = '';
     if (parsed.timeStart) {
       finalTime = `${String(parsed.timeStart.h).padStart(2,'0')}:${String(parsed.timeStart.m).padStart(2,'0')}`;
     } else if (timeVal) {
       finalTime = timeVal;
     }
-    
     let finalTimeEnd = '';
     if (parsed.timeEnd) {
       finalTimeEnd = `${String(parsed.timeEnd.h).padStart(2,'0')}:${String(parsed.timeEnd.m).padStart(2,'0')}`;
     }
-
-    // Текст события (если пустой — используем весь исходный текст)
     const taskText = parsed.text || rawText;
 
     tasks.push({
@@ -1069,14 +1228,10 @@ function addTask() {
 
   save(); render();
   scheduleAllNotifications();
-  
   document.getElementById('taskInput').value = '';
   document.getElementById('timeInput').value = '';
   document.getElementById('taskInput').focus();
-  
-  if (tasksCreated > 1) {
-    alert(`✅ Создано задач: ${tasksCreated}`);
-  }
+  if (tasksCreated > 1) alert(`✅ Создано задач: ${tasksCreated}`);
 }
 
 function formatDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -1088,22 +1243,14 @@ function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
 function exportTaskToCalendar(id) {
   const task = tasks.find(t => t.id === id);
   if (!task) return;
-  if (!task.time) {
-    alert('⚠️ У задачи нет времени. Добавьте время, чтобы экспортировать в календарь.');
-    return;
-  }
-  const icsContent = generateICS([task]);
-  downloadICS(icsContent, `task-${task.id}.ics`);
+  if (!task.time) { alert('⚠️ У задачи нет времени.'); return; }
+  downloadICS(generateICS([task]), `task-${task.id}.ics`);
 }
 
 function exportAllToCalendar() {
   const activeTasks = tasks.filter(t => !t.done && t.time);
-  if (activeTasks.length === 0) {
-    alert('Нет активных задач с временем для экспорта');
-    return;
-  }
-  const icsContent = generateICS(activeTasks);
-  downloadICS(icsContent, 'all-tasks.ics');
+  if (activeTasks.length === 0) { alert('Нет активных задач с временем для экспорта'); return; }
+  downloadICS(generateICS(activeTasks), 'all-tasks.ics');
 }
 
 function generateICS(tasksArray) {
@@ -1120,9 +1267,7 @@ function generateICS(tasksArray) {
     } else {
       endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
     }
-    const formatICSDate = (d) => {
-      return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + 'T' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
-    };
+    const formatICSDate = (d) => d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + 'T' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
     ics += `BEGIN:VEVENT\nUID:${task.id}@mytasks\nDTSTAMP:${formatICSDate(new Date())}\nDTSTART:${formatICSDate(startDate)}\nDTEND:${formatICSDate(endDate)}\nSUMMARY:${escapeICS(task.text)}\nDESCRIPTION:Задача из приложения "Мои задачи"\nEND:VEVENT\n`;
   });
   ics += 'END:VCALENDAR';
@@ -1165,7 +1310,11 @@ function saveEdit() {
 
 document.getElementById('editModal').addEventListener('click', (e) => { if (e.target.id === 'editModal') closeEdit(); });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { if (editingTaskId !== null) closeEdit(); if (isRecording) recognition.stop(); }
+  if (e.key === 'Escape') {
+    if (editingTaskId !== null) closeEdit();
+    if (document.getElementById('changelogModal').classList.contains('show')) closeChangelog();
+    if (isRecording) recognition.stop();
+  }
 });
 document.getElementById('editText').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveEdit(); });
 
@@ -1188,7 +1337,7 @@ function render() {
   const list = document.getElementById('taskList');
   const filtered = getFiltered().sort((a,b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
-    return (a.time || '99:99').localeCompare(b.time || '99:99');
+    return (a.time || '00:00').localeCompare(b.time || '00:00');
   });
 
   const todayStr = formatDate(new Date());
@@ -1215,10 +1364,10 @@ function render() {
   const todayDate = new Date(); todayDate.setHours(0,0,0,0);
   let html = '';
 
-  Object.keys(byMonth).sort().reverse().forEach(mKey => {
+  Object.keys(byMonth).sort().forEach(mKey => {
     const m = byMonth[mKey];
     html += `<div class="month-group"><div class="month-title">${MONTHS_NOM[m.month]} ${m.year}</div>`;
-    Object.keys(m.days).sort().reverse().forEach(dateKey => {
+    Object.keys(m.days).sort().forEach(dateKey => {
       const d = new Date(dateKey);
       const diff = Math.round((d - todayDate) / (1000*60*60*24));
       let label = `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}, ${WEEKDAYS[d.getDay()]}`;
