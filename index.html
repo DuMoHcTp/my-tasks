@@ -401,7 +401,6 @@
   .install-btn { background: white !important; color: var(--success) !important; padding: 10px 20px !important; font-weight: 700 !important; }
   .install-close { background: transparent !important; color: white !important; padding: 6px 10px !important; font-size: 22px !important; }
 
-  /* Уведомления */
   .notification-banner {
     background: linear-gradient(135deg, var(--warning), #d97706);
     color: white;
@@ -513,7 +512,6 @@
           <line x1="16" y1="2" x2="16" y2="6"></line>
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
-          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path>
         </svg>
       </button>
       <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">
@@ -545,7 +543,7 @@
 
   <div class="card">
     <div class="input-row">
-      <input type="text" id="taskInput" class="task-input" placeholder="Что нужно сделать? (напр.: завтра с 15 до 17 встреча)">
+      <input type="text" id="taskInput" class="task-input" placeholder="Что нужно сделать? (напр.: 27.10 12:15 - 14:00 встреча)">
       <input type="date" id="dateInput" class="date-input">
       <input type="time" id="timeInput" class="time-input">
       <button class="btn-mic" id="micBtn" onclick="toggleVoice()" title="Голосовой ввод">
@@ -570,7 +568,7 @@
         <line x1="12" y1="16" x2="12" y2="12"></line>
         <line x1="12" y1="8" x2="12.01" y2="8"></line>
       </svg>
-      Диктуй: "завтра с 15 до 17 встреча", "в субботу к врачу", "послезавтра в 18 часов звонок"
+      Диктуй: "27.10 12:15 - 14:00 встреча", "завтра в 15 часов звонок", "в субботу к врачу"
     </div>
     <div class="voice-status" id="voiceStatus">
       <div class="dot"></div>
@@ -687,7 +685,6 @@ initTheme();
 // ========== УВЕДОМЛЕНИЯ ==========
 function initNotifications() {
   if (!('Notification' in window)) return;
-  
   if (Notification.permission === 'default') {
     document.getElementById('notificationBanner').classList.add('show');
   } else if (Notification.permission === 'granted') {
@@ -700,7 +697,6 @@ function requestNotificationPermission() {
     alert('Ваш браузер не поддерживает уведомления');
     return;
   }
-  
   Notification.requestPermission().then(permission => {
     document.getElementById('notificationBanner').classList.remove('show');
     if (permission === 'granted') {
@@ -712,7 +708,6 @@ function requestNotificationPermission() {
 
 function showNotification(title, body) {
   if (Notification.permission !== 'granted') return;
-  
   const notification = new Notification(title, {
     body: body,
     icon: generateIcon(192),
@@ -720,40 +715,24 @@ function showNotification(title, body) {
     vibrate: [200, 100, 200],
     tag: 'task-reminder'
   });
-  
-  notification.onclick = () => {
-    window.focus();
-    notification.close();
-  };
+  notification.onclick = () => { window.focus(); notification.close(); };
 }
 
 function scheduleAllNotifications() {
-  // Очищаем все старые таймеры
   Object.values(notificationTimers).forEach(timer => clearTimeout(timer));
   notificationTimers = {};
-  
   if (Notification.permission !== 'granted') return;
-  
   const now = new Date();
-  
   tasks.forEach(task => {
-    if (task.done) return;
-    if (!task.time) return;
-    
+    if (task.done || !task.time) return;
     const [hours, minutes] = task.time.split(':').map(Number);
     const taskDate = new Date(task.date);
     taskDate.setHours(hours, minutes, 0, 0);
-    
-    // Напоминание за 15 минут до задачи
     const reminderTime = new Date(taskDate.getTime() - 15 * 60 * 1000);
     const timeUntilReminder = reminderTime.getTime() - now.getTime();
-    
-    if (timeUntilReminder > 0 && timeUntilReminder < 7 * 24 * 60 * 60 * 1000) { // В пределах недели
+    if (timeUntilReminder > 0 && timeUntilReminder < 7 * 24 * 60 * 60 * 1000) {
       notificationTimers[task.id] = setTimeout(() => {
-        showNotification(
-          '⏰ Напоминание о задаче',
-          `${task.text}\n${formatDateTime(task.date, task.time)}`
-        );
+        showNotification('⏰ Напоминание о задаче', `${task.text}\n${formatDateTime(task.date, task.time)}`);
       }, timeUntilReminder);
     }
   });
@@ -761,10 +740,7 @@ function scheduleAllNotifications() {
 
 function formatDateTime(dateStr, timeStr) {
   const date = new Date(dateStr);
-  const day = date.getDate();
-  const month = MONTHS_GEN[date.getMonth()];
-  const weekday = WEEKDAYS[date.getDay()];
-  return `${day} ${month}, ${weekday} в ${timeStr}`;
+  return `${date.getDate()} ${MONTHS_GEN[date.getMonth()]} в ${timeStr}`;
 }
 
 // ========== ИКОНКИ ==========
@@ -888,53 +864,99 @@ initVoice();
 
 document.getElementById('dateInput').value = '';
 
-// ========== ПАРСИНГ ==========
-function parseDateFromText(text) {
+// ========== 🆕 УЛУЧШЕННЫЙ ПАРСИНГ ==========
+
+// Нормализация текста после голосового ввода
+function normalizeVoiceText(text) {
+  let t = text;
+  // Заменяем голосовые артефакты на символы
+  t = t.replace(/\s*точка\s*/gi, '.');
+  t = t.replace(/\s*тире\s*/gi, '-');
+  t = t.replace(/\s*двоеточие\s*/gi, ':');
+  t = t.replace(/\s*минус\s*/gi, '-');
+  t = t.replace(/\s*слэш\s*/gi, '/');
+  t = t.replace(/\s*подчеркивание\s*/gi, '_');
+  // Убираем лишние пробелы вокруг символов
+  t = t.replace(/\s+([.:;,\-\/])/g, '$1');
+  t = t.replace(/([.:;,\-\/])\s+/g, '$1');
+  return t;
+}
+
+// Парсит ОДНО событие из текста. Возвращает {date, timeStart, timeEnd, text}
+function parseSingleEvent(text) {
   const today = new Date(); today.setHours(0,0,0,0);
   let date = null, timeStart = null, timeEnd = null;
   let cleanText = text;
 
-  let intervalMatch = cleanText.match(/с\s+(\d{1,2})[:\.]?(\d{2})?\s+(?:до|по)\s+(\d{1,2})[:\.]?(\d{2})?/i);
+  // 1. Интервал времени: "12:15 - 14:00", "12:15-14:00", "с 12 до 14"
+  let intervalMatch = cleanText.match(/(\d{1,2})[:\.](\d{2})\s*[-–—]\s*(\d{1,2})[:\.](\d{2})/);
   if (intervalMatch) {
-    timeStart = { h: parseInt(intervalMatch[1]), m: intervalMatch[2] ? parseInt(intervalMatch[2]) : 0 };
-    timeEnd = { h: parseInt(intervalMatch[3]), m: intervalMatch[4] ? parseInt(intervalMatch[4]) : 0 };
+    timeStart = { h: parseInt(intervalMatch[1]), m: parseInt(intervalMatch[2]) };
+    timeEnd = { h: parseInt(intervalMatch[3]), m: parseInt(intervalMatch[4]) };
     cleanText = cleanText.replace(intervalMatch[0], '').trim();
   } else {
-    let timeMatch = cleanText.match(/(?:в\s+)?(\d{1,2})[:\.](\d{2})/i);
-    if (timeMatch) {
-      timeStart = { h: parseInt(timeMatch[1]), m: parseInt(timeMatch[2]) };
-      cleanText = cleanText.replace(timeMatch[0], '').trim();
+    let intervalWords = cleanText.match(/с\s+(\d{1,2})[:\.]?(\d{2})?\s+(?:до|по)\s+(\d{1,2})[:\.]?(\d{2})?/i);
+    if (intervalWords) {
+      timeStart = { h: parseInt(intervalWords[1]), m: intervalWords[2] ? parseInt(intervalWords[2]) : 0 };
+      timeEnd = { h: parseInt(intervalWords[3]), m: intervalWords[4] ? parseInt(intervalWords[4]) : 0 };
+      cleanText = cleanText.replace(intervalWords[0], '').trim();
     } else {
-      let hourMatch = cleanText.match(/(?:в\s+)?(\d{1,2})\s+(?:часов|часа)/i);
-      if (hourMatch) {
-        timeStart = { h: parseInt(hourMatch[1]), m: 0 };
-        cleanText = cleanText.replace(hourMatch[0], '').trim();
+      // Одиночное время
+      let timeMatch = cleanText.match(/(?:в\s+)?(\d{1,2})[:\.](\d{2})/i);
+      if (timeMatch) {
+        timeStart = { h: parseInt(timeMatch[1]), m: parseInt(timeMatch[2]) };
+        cleanText = cleanText.replace(timeMatch[0], '').trim();
+      } else {
+        let hourMatch = cleanText.match(/(?:в\s+)?(\d{1,2})\s+(?:часов|часа)/i);
+        if (hourMatch) {
+          timeStart = { h: parseInt(hourMatch[1]), m: 0 };
+          cleanText = cleanText.replace(hourMatch[0], '').trim();
+        }
       }
     }
   }
 
-  if (/сегодня/i.test(cleanText)) {
-    date = new Date(today); cleanText = cleanText.replace(/сегодня/i, '').trim();
-  } else if (/послезавтра/i.test(cleanText)) {
-    date = new Date(today); date.setDate(date.getDate() + 2); cleanText = cleanText.replace(/послезавтра/i, '').trim();
-  } else if (/завтра/i.test(cleanText)) {
-    date = new Date(today); date.setDate(date.getDate() + 1); cleanText = cleanText.replace(/завтра/i, '').trim();
+  // 2. Дата в формате ДД.ММ или ДД.ММ.ГГГГ или ДД/ММ или ДД-ММ
+  let dateNumMatch = cleanText.match(/(\d{1,2})[.\/\-](\d{1,2})(?:[.\/\-](\d{2,4}))?/);
+  if (dateNumMatch) {
+    const day = parseInt(dateNumMatch[1]);
+    const month = parseInt(dateNumMatch[2]) - 1;
+    let year = today.getFullYear();
+    if (dateNumMatch[3]) {
+      year = parseInt(dateNumMatch[3]);
+      if (year < 100) year += 2000;
+    }
+    date = new Date(year, month, day);
+    // Если дата в прошлом и год не указан — берём следующий год
+    if (!dateNumMatch[3] && date < today) {
+      date.setFullYear(date.getFullYear() + 1);
+    }
+    cleanText = cleanText.replace(dateNumMatch[0], '').trim();
   } else {
-    const dayMatch = cleanText.match(/(?:в\s*)?(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)/i);
-    if (dayMatch) {
-      const dayNames = { 'понедельник':1,'вторник':2,'среду':3,'четверг':4,'пятницу':5,'субботу':6,'воскресенье':0 };
-      const target = dayNames[dayMatch[1].toLowerCase()];
-      const diff = (target - today.getDay() + 7) % 7 || 7;
-      date = new Date(today); date.setDate(date.getDate() + diff);
-      cleanText = cleanText.replace(dayMatch[0], '').trim();
+    // Дата словами
+    if (/сегодня/i.test(cleanText)) {
+      date = new Date(today); cleanText = cleanText.replace(/сегодня/i, '').trim();
+    } else if (/послезавтра/i.test(cleanText)) {
+      date = new Date(today); date.setDate(date.getDate() + 2); cleanText = cleanText.replace(/послезавтра/i, '').trim();
+    } else if (/завтра/i.test(cleanText)) {
+      date = new Date(today); date.setDate(date.getDate() + 1); cleanText = cleanText.replace(/завтра/i, '').trim();
     } else {
-      const dateMatch = cleanText.match(/(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)/i);
-      if (dateMatch) {
-        const day = parseInt(dateMatch[1]);
-        const month = MONTHS_GEN.indexOf(dateMatch[2].toLowerCase());
-        date = new Date(today.getFullYear(), month, day);
-        if (date < today) date.setFullYear(date.getFullYear() + 1);
-        cleanText = cleanText.replace(dateMatch[0], '').trim();
+      const dayMatch = cleanText.match(/(?:в\s*)?(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)/i);
+      if (dayMatch) {
+        const dayNames = { 'понедельник':1,'вторник':2,'среду':3,'четверг':4,'пятницу':5,'субботу':6,'воскресенье':0 };
+        const target = dayNames[dayMatch[1].toLowerCase()];
+        const diff = (target - today.getDay() + 7) % 7 || 7;
+        date = new Date(today); date.setDate(date.getDate() + diff);
+        cleanText = cleanText.replace(dayMatch[0], '').trim();
+      } else {
+        const dateMatch = cleanText.match(/(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)/i);
+        if (dateMatch) {
+          const day = parseInt(dateMatch[1]);
+          const month = MONTHS_GEN.indexOf(dateMatch[2].toLowerCase());
+          date = new Date(today.getFullYear(), month, day);
+          if (date < today) date.setFullYear(date.getFullYear() + 1);
+          cleanText = cleanText.replace(dateMatch[0], '').trim();
+        }
       }
     }
   }
@@ -944,31 +966,117 @@ function parseDateFromText(text) {
   return { text: cleanText, date, timeStart, timeEnd };
 }
 
+// Парсит НЕСКОЛЬКО событий из текста
+function parseMultipleTasks(text) {
+  const normalized = normalizeVoiceText(text);
+  
+  // Паттерн для поиска даты: "27.10", "27/10", "27-10", "27 октября", "завтра", "в субботу" и т.д.
+  // Ищем все вхождения дат в тексте
+  const datePatterns = [
+    /(\d{1,2})[.\/\-](\d{1,2})(?:[.\/\-](\d{2,4}))?/g, // 27.10, 27/10, 27.10.2026
+    /(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)/gi, // 27 октября
+    /(сегодня|завтра|послезавтра)/gi,
+    /(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)/gi
+  ];
+
+  // Находим все позиции дат в тексте
+  const datePositions = [];
+  
+  datePatterns.forEach(pattern => {
+    let match;
+    const regex = new RegExp(pattern.source, pattern.flags);
+    while ((match = regex.exec(normalized)) !== null) {
+      datePositions.push({
+        index: match.index,
+        length: match[0].length,
+        text: match[0]
+      });
+    }
+  });
+
+  // Если дат не найдено — одно событие на сегодня
+  if (datePositions.length === 0) {
+    const parsed = parseSingleEvent(normalized);
+    return [parsed];
+  }
+
+  // Сортируем по позиции
+  datePositions.sort((a, b) => a.index - b.index);
+
+  // Разбиваем текст на сегменты по датам
+  const segments = [];
+  for (let i = 0; i < datePositions.length; i++) {
+    const start = datePositions[i].index;
+    const end = i + 1 < datePositions.length ? datePositions[i + 1].index : normalized.length;
+    segments.push(normalized.substring(start, end).trim());
+  }
+
+  // Парсим каждый сегмент
+  const results = [];
+  segments.forEach(segment => {
+    const parsed = parseSingleEvent(segment);
+    if (parsed.text || parsed.date || parsed.timeStart) {
+      results.push(parsed);
+    }
+  });
+
+  return results.length > 0 ? results : [parseSingleEvent(normalized)];
+}
+
+// ========== ДОБАВЛЕНИЕ ЗАДАЧ ==========
 function addTask() {
   const rawText = document.getElementById('taskInput').value.trim();
   const dateVal = document.getElementById('dateInput').value;
   const timeVal = document.getElementById('timeInput').value;
   if (!rawText) { alert('Введите задачу!'); return; }
 
-  const parsed = parseDateFromText(rawText);
-  let finalDate = parsed.date ? formatDate(parsed.date) : (dateVal || formatDate(new Date()));
-  let finalTime = timeVal || (parsed.timeStart ? `${String(parsed.timeStart.h).padStart(2,'0')}:${String(parsed.timeStart.m).padStart(2,'0')}` : '');
-  let finalTimeEnd = parsed.timeEnd ? `${String(parsed.timeEnd.h).padStart(2,'0')}:${String(parsed.timeEnd.m).padStart(2,'0')}` : '';
+  // Парсим все события из текста
+  const parsedEvents = parseMultipleTasks(rawText);
+  
+  let tasksCreated = 0;
+  
+  parsedEvents.forEach(parsed => {
+    // Если у события нет даты, используем дату из поля или сегодня
+    let finalDate = parsed.date ? formatDate(parsed.date) : (dateVal || formatDate(new Date()));
+    
+    // Если у события нет времени, используем время из поля
+    let finalTime = '';
+    if (parsed.timeStart) {
+      finalTime = `${String(parsed.timeStart.h).padStart(2,'0')}:${String(parsed.timeStart.m).padStart(2,'0')}`;
+    } else if (timeVal) {
+      finalTime = timeVal;
+    }
+    
+    let finalTimeEnd = '';
+    if (parsed.timeEnd) {
+      finalTimeEnd = `${String(parsed.timeEnd.h).padStart(2,'0')}:${String(parsed.timeEnd.m).padStart(2,'0')}`;
+    }
 
-  tasks.push({
-    id: Date.now(),
-    text: parsed.text || rawText,
-    date: finalDate,
-    time: finalTime,
-    timeEnd: finalTimeEnd,
-    done: false,
-    created: Date.now()
+    // Текст события (если пустой — используем весь исходный текст)
+    const taskText = parsed.text || rawText;
+
+    tasks.push({
+      id: Date.now() + tasksCreated,
+      text: taskText,
+      date: finalDate,
+      time: finalTime,
+      timeEnd: finalTimeEnd,
+      done: false,
+      created: Date.now()
+    });
+    tasksCreated++;
   });
+
   save(); render();
   scheduleAllNotifications();
+  
   document.getElementById('taskInput').value = '';
   document.getElementById('timeInput').value = '';
   document.getElementById('taskInput').focus();
+  
+  if (tasksCreated > 1) {
+    alert(`✅ Создано задач: ${tasksCreated}`);
+  }
 }
 
 function formatDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -980,84 +1088,55 @@ function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
 function exportTaskToCalendar(id) {
   const task = tasks.find(t => t.id === id);
   if (!task) return;
-  
   if (!task.time) {
     alert('⚠️ У задачи нет времени. Добавьте время, чтобы экспортировать в календарь.');
     return;
   }
-  
   const icsContent = generateICS([task]);
   downloadICS(icsContent, `task-${task.id}.ics`);
 }
 
 function exportAllToCalendar() {
   const activeTasks = tasks.filter(t => !t.done && t.time);
-  
   if (activeTasks.length === 0) {
     alert('Нет активных задач с временем для экспорта');
     return;
   }
-  
   const icsContent = generateICS(activeTasks);
   downloadICS(icsContent, 'all-tasks.ics');
 }
 
 function generateICS(tasksArray) {
-  let ics = 'BEGIN:VCALENDAR\n';
-  ics += 'VERSION:2.0\n';
-  ics += 'PRODID:-//My Tasks//RU\n';
-  ics += 'CALSCALE:GREGORIAN\n';
-  ics += 'METHOD:PUBLISH\n';
-  
+  let ics = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//My Tasks//RU\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n';
   tasksArray.forEach(task => {
     const startDate = new Date(task.date);
     const [startHours, startMinutes] = task.time.split(':').map(Number);
     startDate.setHours(startHours, startMinutes, 0);
-    
     let endDate;
     if (task.timeEnd) {
       endDate = new Date(task.date);
       const [endHours, endMinutes] = task.timeEnd.split(':').map(Number);
       endDate.setHours(endHours, endMinutes, 0);
     } else {
-      endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 час по умолчанию
+      endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
     }
-    
     const formatICSDate = (d) => {
-      return d.getFullYear() +
-        String(d.getMonth() + 1).padStart(2, '0') +
-        String(d.getDate()).padStart(2, '0') + 'T' +
-        String(d.getHours()).padStart(2, '0') +
-        String(d.getMinutes()).padStart(2, '0') +
-        String(d.getSeconds()).padStart(2, '0');
+      return d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + 'T' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
     };
-    
-    ics += 'BEGIN:VEVENT\n';
-    ics += `UID:${task.id}@mytasks\n`;
-    ics += `DTSTAMP:${formatICSDate(new Date())}\n`;
-    ics += `DTSTART:${formatICSDate(startDate)}\n`;
-    ics += `DTEND:${formatICSDate(endDate)}\n`;
-    ics += `SUMMARY:${escapeICS(task.text)}\n`;
-    ics += `DESCRIPTION:Задача из приложения "Мои задачи"\n`;
-    ics += 'END:VEVENT\n';
+    ics += `BEGIN:VEVENT\nUID:${task.id}@mytasks\nDTSTAMP:${formatICSDate(new Date())}\nDTSTART:${formatICSDate(startDate)}\nDTEND:${formatICSDate(endDate)}\nSUMMARY:${escapeICS(task.text)}\nDESCRIPTION:Задача из приложения "Мои задачи"\nEND:VEVENT\n`;
   });
-  
   ics += 'END:VCALENDAR';
   return ics;
 }
 
-function escapeICS(text) {
-  return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
-}
+function escapeICS(text) { return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;'); }
 
 function downloadICS(content, filename) {
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
+  link.href = url; link.download = filename;
+  document.body.appendChild(link); link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
@@ -1080,7 +1159,6 @@ function saveEdit() {
   const newTime = document.getElementById('editTime').value;
   const newTimeEnd = document.getElementById('editTimeEnd').value;
   if (!newText || !newDate) { alert('Заполните текст и дату!'); return; }
-  
   const task = tasks.find(t => t.id === editingTaskId);
   if (task) { task.text = newText; task.date = newDate; task.time = newTime; task.timeEnd = newTimeEnd; save(); render(); scheduleAllNotifications(); closeEdit(); }
 }
