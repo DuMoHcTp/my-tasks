@@ -5,173 +5,426 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Мои задачи</title>
 
-<!-- PWA мета-теги -->
-<meta name="theme-color" content="#667eea">
-<meta name="description" content="Умный планировщик задач с голосовым вводом">
+<meta name="theme-color" content="#6366f1">
+<meta name="description" content="Умный планировщик задач">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Мои задачи">
+<meta name="apple-mobile-web-app-title" content="Задачи">
 <link rel="manifest" href="manifest.json">
 
-<!-- Иконки (генерируются JS) -->
 <link rel="icon" type="image/png" sizes="192x192" id="icon192">
 <link rel="apple-touch-icon" sizes="180x180" id="appleIcon">
 
 <style>
+  :root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+    --accent: #ec4899;
+    --accent-2: #8b5cf6;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #ec4899 100%);
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --card-border: rgba(255, 255, 255, 0.3);
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --border: #e5e7eb;
+    --bg-soft: #f9fafb;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow: 0 10px 40px rgba(99, 102, 241, 0.15);
+    --shadow-lg: 0 20px 60px rgba(99, 102, 241, 0.25);
+  }
+
+  [data-theme="dark"] {
+    --card-bg: rgba(30, 32, 45, 0.95);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --text: #f3f4f6;
+    --text-muted: #9ca3af;
+    --text-light: #6b7280;
+    --border: #374151;
+    --bg-soft: #1f2937;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+    background: var(--bg-gradient);
+    background-attachment: fixed;
     min-height: 100vh;
     padding: 20px;
-    color: #333;
+    color: var(--text);
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    transition: color 0.3s;
   }
+
   @supports (padding: max(0px)) {
     body { padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
   }
-  .container { max-width: 900px; margin: 0 auto; }
-  h1 { color: white; text-align: center; margin-bottom: 20px; font-size: 2em; }
-  .card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+  .container { max-width: 900px; margin: 0 auto; width: 100%; }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+    gap: 10px;
   }
-  .input-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  h1 {
+    color: white;
+    font-size: 1.8em;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.3);
+  }
+
+  .header-actions { display: flex; gap: 8px; }
+
+  .theme-toggle, .calendar-export-btn {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+  .theme-toggle:hover, .calendar-export-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
+
+  .card {
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    width: 100%;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .input-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+  
   input, button, select {
-    padding: 12px 16px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
+    padding: 14px 18px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
     font-size: 15px;
     outline: none;
     transition: all 0.2s;
     font-family: inherit;
+    min-width: 0;
+    background: var(--bg-soft);
+    color: var(--text);
   }
-  input:focus, select:focus { border-color: #667eea; }
-  .task-input { flex: 1; min-width: 200px; }
-  .date-input { width: 160px; }
-  .time-input { width: 110px; }
+  input:focus, select:focus {
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+  [data-theme="dark"] input:focus { background: #1f2937; }
+
+  .task-input { flex: 1 1 100%; min-width: 0; }
+  .date-input { flex: 1 1 calc(50% - 5px); min-width: 140px; }
+  .time-input { flex: 1 1 calc(50% - 5px); min-width: 100px; }
+  .btn-mic, .btn-add { flex: 0 0 auto; }
+
   button {
-    background: #667eea;
+    background: var(--primary);
     color: white;
     border: none;
     cursor: pointer;
     font-weight: 600;
-  }
-  button:hover { background: #5568d3; transform: translateY(-1px); }
-  
-  /* Кнопки действий */
-  .btn-mic {
-    background: #667eea;
-    padding: 12px 14px;
-    font-size: 18px;
-    min-width: 48px;
-    display: flex;
+    white-space: nowrap;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
   }
-  .btn-mic:hover { background: #5568d3; }
-  .btn-mic.recording {
-    background: #ff6b6b;
-    animation: pulse 1.2s infinite;
+  button:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3); }
+  button:active { transform: translateY(0); }
+
+  .btn-mic {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    padding: 14px 16px;
+    min-width: 52px;
+    position: relative;
   }
+  .btn-mic:hover { background: linear-gradient(135deg, #db2777, #7c3aed); box-shadow: 0 8px 20px rgba(236, 72, 153, 0.4); }
+  .btn-mic.recording { background: var(--danger); animation: pulse 1.2s infinite; }
   .btn-mic.recording::after {
     content: '';
     position: absolute;
     top: -4px; left: -4px; right: -4px; bottom: -4px;
-    border: 3px solid #ff6b6b;
-    border-radius: 12px;
+    border: 3px solid var(--danger);
+    border-radius: 16px;
     animation: ripple 1.5s infinite;
   }
-  .btn-mic.unsupported { background: #ccc; cursor: not-allowed; }
-  .btn-mic.unsupported:hover { background: #ccc; transform: none; }
-  
+  .btn-mic.unsupported { background: #9ca3af; cursor: not-allowed; }
+  .btn-mic.unsupported:hover { background: #9ca3af; transform: none; box-shadow: none; }
+
   @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
   @keyframes ripple { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.3); } }
 
-  .btn-del { background: #ff6b6b; padding: 6px 12px; font-size: 13px; }
-  .btn-done { background: #51cf66; padding: 6px 12px; font-size: 13px; }
-  .btn-edit { background: #ffa94d; padding: 6px 12px; font-size: 13px; }
-  
-  .filters { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-  .filter-btn { background: #f0f0f0; color: #555; padding: 8px 14px; font-size: 13px; border-radius: 20px; }
-  .filter-btn.active { background: #667eea; color: white; }
-  
-  .month-group { margin-bottom: 25px; }
-  .month-title { font-size: 1.3em; color: #667eea; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #e0e0e0; text-transform: capitalize; }
-  .day-group { margin-bottom: 15px; }
-  .day-title { font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em; display: flex; align-items: center; gap: 8px; }
-  .day-title.today { color: #667eea; font-weight: 700; }
-  .day-title.overdue { color: #ff6b6b; }
-  
-  .task {
-    background: #f8f9ff;
-    border-left: 4px solid #667eea;
-    padding: 12px 15px;
-    margin-bottom: 8px;
-    border-radius: 8px;
+  .btn-add {
+    background: linear-gradient(135deg, var(--primary), var(--accent-2));
+    padding: 14px 20px;
+  }
+  .btn-add:hover { box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4); }
+
+  .btn-icon {
+    width: 36px; height: 36px;
+    padding: 0;
+    border-radius: 10px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    transition: all 0.2s;
+    justify-content: center;
   }
-  .task:hover { transform: translateX(3px); box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
-  .task.done { opacity: 0.5; border-left-color: #51cf66; }
-  .task.done .task-text { text-decoration: line-through; }
-  .task-time { background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; min-width: 55px; text-align: center; }
-  .task-text { flex: 1; font-size: 15px; word-break: break-word; }
-  .task-actions { display: flex; gap: 5px; flex-shrink: 0; }
-  
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px; }
-  .stat { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px; border-radius: 10px; text-align: center; }
-  .stat-num { font-size: 1.8em; font-weight: 700; }
-  .stat-label { font-size: 0.8em; opacity: 0.9; }
-  
-  .empty { text-align: center; color: #999; padding: 40px; font-style: italic; }
-  .hint { font-size: 12px; color: #888; margin-top: 8px; }
+  .btn-edit { background: #fef3c7; color: #d97706; }
+  [data-theme="dark"] .btn-edit { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+  .btn-edit:hover { background: #fde68a; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3); }
 
-  /* Статус голосового ввода */
+  .btn-done { background: #d1fae5; color: #059669; }
+  [data-theme="dark"] .btn-done { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+  .btn-done:hover { background: #a7f3d0; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
+
+  .btn-del { background: #fee2e2; color: #dc2626; }
+  [data-theme="dark"] .btn-del { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+  .btn-del:hover { background: #fecaca; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
+
+  .btn-calendar { background: #dbeafe; color: #2563eb; }
+  [data-theme="dark"] .btn-calendar { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+  .btn-calendar:hover { background: #bfdbfe; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+
+  .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-btn {
+    background: var(--bg-soft);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-weight: 500;
+  }
+  .filter-btn:hover { background: var(--border); color: var(--text); transform: none; box-shadow: none; }
+  .filter-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--accent-2));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  .month-group { margin-bottom: 30px; }
+  .month-title {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    text-transform: capitalize;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .month-title::before {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+  }
+
+  .day-group { margin-bottom: 16px; }
+  .day-title {
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .day-title.today { color: var(--primary); font-weight: 700; }
+  .day-title.overdue { color: var(--danger); }
+
+  .task {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+  }
+  .task::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--primary), var(--accent));
+  }
+  .task:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary-light);
+  }
+  .task.done { opacity: 0.55; }
+  .task.done::before { background: var(--success); }
+  .task.done .task-text { text-decoration: line-through; color: var(--text-muted); }
+
+  .task-time {
+    background: linear-gradient(135deg, var(--primary), var(--accent-2));
+    color: white;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 60px;
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+  }
+  .task-text { flex: 1 1 auto; font-size: 15px; word-break: break-word; min-width: 0; font-weight: 500; }
+  .task-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat {
+    background: linear-gradient(135deg, var(--primary), var(--accent-2));
+    color: white;
+    padding: 16px 12px;
+    border-radius: 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+  }
+  .stat::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -50%;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
+  }
+  .stat-num { font-size: 2em; font-weight: 800; position: relative; letter-spacing: -1px; }
+  .stat-label { font-size: 0.75em; opacity: 0.9; position: relative; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+  .empty { text-align: center; color: var(--text-light); padding: 50px 20px; font-style: italic; }
+  .empty-icon { font-size: 3em; margin-bottom: 10px; opacity: 0.5; }
+  .hint { font-size: 12px; color: var(--text-muted); margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+
   .voice-status {
     display: none;
     align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    background: #fff3f3;
-    border-left: 4px solid #ff6b6b;
-    border-radius: 8px;
-    margin-top: 10px;
+    gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    margin-top: 12px;
     font-size: 14px;
-    color: #c92a2a;
+    color: #991b1b;
+    flex-wrap: wrap;
+  }
+  [data-theme="dark"] .voice-status {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
   }
   .voice-status.show { display: flex; }
-  .voice-status .dot { width: 10px; height: 10px; background: #ff6b6b; border-radius: 50%; animation: blink 1s infinite; }
+  .voice-status .dot {
+    width: 10px; height: 10px;
+    background: var(--danger);
+    border-radius: 50%;
+    animation: blink 1s infinite;
+    box-shadow: 0 0 10px var(--danger);
+  }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .voice-interim { color: #888; font-style: italic; margin-left: 4px; }
+  .voice-interim { color: var(--text-muted); font-style: italic; margin-left: 4px; word-break: break-word; }
 
   .install-banner {
-    background: linear-gradient(135deg, #51cf66, #37b24d);
+    background: linear-gradient(135deg, var(--success), #059669);
     color: white;
-    padding: 15px;
-    border-radius: 12px;
+    padding: 16px;
+    border-radius: 16px;
     margin-bottom: 20px;
     display: none;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 5px 15px rgba(81, 207, 102, 0.3);
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+    flex-wrap: wrap;
   }
   .install-banner.show { display: flex; }
-  .install-banner-text { flex: 1; font-weight: 600; }
-  .install-btn { background: white !important; color: #37b24d !important; padding: 8px 16px !important; font-weight: 700 !important; }
-  .install-close { background: transparent !important; color: white !important; padding: 4px 8px !important; font-size: 20px !important; }
+  .install-banner-text { flex: 1; font-weight: 600; min-width: 200px; }
+  .install-btn { background: white !important; color: var(--success) !important; padding: 10px 20px !important; font-weight: 700 !important; }
+  .install-close { background: transparent !important; color: white !important; padding: 6px 10px !important; font-size: 22px !important; }
 
-  /* Модальное окно */
+  /* Уведомления */
+  .notification-banner {
+    background: linear-gradient(135deg, var(--warning), #d97706);
+    color: white;
+    padding: 14px 18px;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+    flex-wrap: wrap;
+  }
+  .notification-banner.show { display: flex; }
+  .notification-banner-text { flex: 1; font-weight: 600; font-size: 14px; }
+  .notification-btn { background: white !important; color: var(--warning) !important; padding: 8px 16px !important; font-weight: 700 !important; font-size: 13px !important; }
+
   .modal-overlay {
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 1000;
     align-items: center;
     justify-content: center;
@@ -183,46 +436,101 @@
   @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
   .modal {
-    background: white;
-    border-radius: 16px;
-    padding: 25px;
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 28px;
     max-width: 500px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-lg);
     animation: slideUp 0.3s ease;
   }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0; }
-  .modal-title { font-size: 1.3em; font-weight: 700; color: #333; }
-  .modal-close { background: #f0f0f0 !important; color: #666 !important; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 0 !important; }
-  .modal-close:hover { background: #e0e0e0 !important; }
-  .modal-field { margin-bottom: 15px; }
-  .modal-field label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 2px solid var(--border); }
+  .modal-title { font-size: 1.3em; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .modal-close {
+    background: var(--bg-soft) !important;
+    color: var(--text-muted) !important;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+  }
+  .modal-close:hover { background: var(--border) !important; transform: rotate(90deg); }
+  .modal-field { margin-bottom: 16px; }
+  .modal-field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
   .modal-field input { width: 100%; }
-  .modal-row { display: flex; gap: 10px; }
-  .modal-row .modal-field { flex: 1; }
-  .modal-actions { display: flex; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 2px solid #f0f0f0; }
-  .modal-actions button { flex: 1; padding: 12px; font-size: 15px; }
-  .btn-save { background: #51cf66 !important; }
-  .btn-save:hover { background: #40c057 !important; }
-  .btn-cancel { background: #f0f0f0 !important; color: #555 !important; }
-  .btn-cancel:hover { background: #e0e0e0 !important; }
+  .modal-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .modal-row .modal-field { flex: 1 1 calc(50% - 6px); min-width: 140px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; padding-top: 18px; border-top: 2px solid var(--border); flex-wrap: wrap; }
+  .modal-actions button { flex: 1 1 calc(50% - 5px); padding: 14px; font-size: 15px; min-width: 120px; border-radius: 14px; }
+  .btn-save { background: linear-gradient(135deg, var(--success), #059669) !important; }
+  .btn-save:hover { box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); }
+  .btn-cancel { background: var(--bg-soft) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+  .btn-cancel:hover { background: var(--border) !important; }
 
   @media (max-width: 600px) {
-    .task-actions { flex-wrap: wrap; }
-    .task { flex-wrap: wrap; }
-    .task-text { width: 100%; order: 3; margin-top: 5px; }
-    .modal { padding: 20px; }
-    .modal-row { flex-direction: column; gap: 0; }
-    .input-row { flex-direction: column; align-items: stretch; }
-    .date-input, .time-input { width: 100%; }
+    body { padding: 12px; }
+    h1 { font-size: 1.4em; }
+    .card { padding: 18px; border-radius: 20px; }
+    .input-row { flex-direction: column; }
+    .task-input, .date-input, .time-input { flex: 1 1 100%; width: 100%; }
+    .btn-mic, .btn-add { width: 100%; }
+    .task { padding: 12px; border-radius: 14px; }
+    .task-text { font-size: 14px; }
+    .task-actions { width: 100%; justify-content: flex-end; margin-top: 6px; }
+    .modal { padding: 22px; border-radius: 20px; }
+    .modal-row { flex-direction: column; }
+    .modal-row .modal-field { flex: 1 1 100%; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions button { flex: 1 1 100%; }
+    .stat { padding: 14px 10px; }
+    .stat-num { font-size: 1.6em; }
   }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>📋 Мои задачи</h1>
+  <div class="header">
+    <h1>
+      <span class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 11l3 3L22 4"></path>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+        </svg>
+      </span>
+      Мои задачи
+    </h1>
+    <div class="header-actions">
+      <button class="calendar-export-btn" onclick="exportAllToCalendar()" title="Экспорт всех задач в календарь">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path>
+        </svg>
+      </button>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">
+        <svg id="themeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
 
   <div class="install-banner" id="installBanner">
     <div class="install-banner-text">📱 Установить как приложение?</div>
@@ -230,15 +538,40 @@
     <button class="install-close" onclick="closeInstall()">×</button>
   </div>
 
+  <div class="notification-banner" id="notificationBanner">
+    <div class="notification-banner-text">🔔 Включи уведомления, чтобы получать напоминания о задачах</div>
+    <button class="notification-btn" onclick="requestNotificationPermission()">Включить</button>
+  </div>
+
   <div class="card">
     <div class="input-row">
-      <input type="text" id="taskInput" class="task-input" placeholder="Что нужно сделать? (напр.: завтра в 15:00 купить молоко)">
+      <input type="text" id="taskInput" class="task-input" placeholder="Что нужно сделать? (напр.: завтра с 15 до 17 встреча)">
       <input type="date" id="dateInput" class="date-input">
       <input type="time" id="timeInput" class="time-input">
-      <button class="btn-mic" id="micBtn" onclick="toggleVoice()" title="Голосовой ввод">🎤</button>
-      <button onclick="addTask()">➕ Добавить</button>
+      <button class="btn-mic" id="micBtn" onclick="toggleVoice()" title="Голосовой ввод">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path>
+          <path d="M19 10v2a7 7 0 01-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="23"></line>
+          <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+      </button>
+      <button class="btn-add" onclick="addTask()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Добавить
+      </button>
     </div>
-    <div class="hint">💡 Совет: диктуй или пиши "сегодня", "завтра", "в понедельник", "15 октября", "в 15 часов".</div>
+    <div class="hint">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      Диктуй: "завтра с 15 до 17 встреча", "в субботу к врачу", "послезавтра в 18 часов звонок"
+    </div>
     <div class="voice-status" id="voiceStatus">
       <div class="dot"></div>
       <span>🎙️ Слушаю... <span class="voice-interim" id="voiceInterim"></span></span>
@@ -264,16 +597,26 @@
   </div>
 </div>
 
-<!-- Модальное окно редактирования -->
 <div class="modal-overlay" id="editModal">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title">✏️ Редактировать задачу</div>
-      <button class="modal-close" onclick="closeEdit()">×</button>
+      <div class="modal-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Редактировать
+      </div>
+      <button class="modal-close" onclick="closeEdit()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
     <div class="modal-field">
-      <label>Что нужно сделать?</label>
-      <input type="text" id="editText" placeholder="Текст задачи">
+      <label>Задача</label>
+      <input type="text" id="editText" placeholder="Что нужно сделать?">
     </div>
     <div class="modal-row">
       <div class="modal-field">
@@ -281,13 +624,26 @@
         <input type="date" id="editDate">
       </div>
       <div class="modal-field">
-        <label>🕐 Время</label>
+        <label>🕐 Начало</label>
         <input type="time" id="editTime">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>🕐 Окончание</label>
+        <input type="time" id="editTimeEnd">
       </div>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeEdit()">Отмена</button>
-      <button class="btn-save" onclick="saveEdit()">💾 Сохранить</button>
+      <button class="btn-save" onclick="saveEdit()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        Сохранить
+      </button>
     </div>
   </div>
 </div>
@@ -299,26 +655,134 @@ let deferredPrompt = null;
 let editingTaskId = null;
 let recognition = null;
 let isRecording = false;
+let notificationTimers = {};
 
 const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MONTHS_NOM = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 const WEEKDAYS = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
 
-// ========== ГЕНЕРАЦИЯ ИКОНОК ==========
+// ========== ТЕМА ==========
+function initTheme() {
+  const saved = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  updateThemeIcon(next);
+}
+function updateThemeIcon(theme) {
+  const icon = document.getElementById('themeIcon');
+  if (theme === 'dark') {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>';
+  } else {
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+  }
+}
+initTheme();
+
+// ========== УВЕДОМЛЕНИЯ ==========
+function initNotifications() {
+  if (!('Notification' in window)) return;
+  
+  if (Notification.permission === 'default') {
+    document.getElementById('notificationBanner').classList.add('show');
+  } else if (Notification.permission === 'granted') {
+    scheduleAllNotifications();
+  }
+}
+
+function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    alert('Ваш браузер не поддерживает уведомления');
+    return;
+  }
+  
+  Notification.requestPermission().then(permission => {
+    document.getElementById('notificationBanner').classList.remove('show');
+    if (permission === 'granted') {
+      scheduleAllNotifications();
+      showNotification('✅ Уведомления включены', 'Вы будете получать напоминания о задачах');
+    }
+  });
+}
+
+function showNotification(title, body) {
+  if (Notification.permission !== 'granted') return;
+  
+  const notification = new Notification(title, {
+    body: body,
+    icon: generateIcon(192),
+    badge: generateIcon(96),
+    vibrate: [200, 100, 200],
+    tag: 'task-reminder'
+  });
+  
+  notification.onclick = () => {
+    window.focus();
+    notification.close();
+  };
+}
+
+function scheduleAllNotifications() {
+  // Очищаем все старые таймеры
+  Object.values(notificationTimers).forEach(timer => clearTimeout(timer));
+  notificationTimers = {};
+  
+  if (Notification.permission !== 'granted') return;
+  
+  const now = new Date();
+  
+  tasks.forEach(task => {
+    if (task.done) return;
+    if (!task.time) return;
+    
+    const [hours, minutes] = task.time.split(':').map(Number);
+    const taskDate = new Date(task.date);
+    taskDate.setHours(hours, minutes, 0, 0);
+    
+    // Напоминание за 15 минут до задачи
+    const reminderTime = new Date(taskDate.getTime() - 15 * 60 * 1000);
+    const timeUntilReminder = reminderTime.getTime() - now.getTime();
+    
+    if (timeUntilReminder > 0 && timeUntilReminder < 7 * 24 * 60 * 60 * 1000) { // В пределах недели
+      notificationTimers[task.id] = setTimeout(() => {
+        showNotification(
+          '⏰ Напоминание о задаче',
+          `${task.text}\n${formatDateTime(task.date, task.time)}`
+        );
+      }, timeUntilReminder);
+    }
+  });
+}
+
+function formatDateTime(dateStr, timeStr) {
+  const date = new Date(dateStr);
+  const day = date.getDate();
+  const month = MONTHS_GEN[date.getMonth()];
+  const weekday = WEEKDAYS[date.getDay()];
+  return `${day} ${month}, ${weekday} в ${timeStr}`;
+}
+
+// ========== ИКОНКИ ==========
 function generateIcon(size) {
   const canvas = document.createElement('canvas');
   canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createLinearGradient(0, 0, size, size);
-  gradient.addColorStop(0, '#667eea'); gradient.addColorStop(1, '#764ba2');
+  gradient.addColorStop(0, '#6366f1'); gradient.addColorStop(0.5, '#8b5cf6'); gradient.addColorStop(1, '#ec4899');
   ctx.fillStyle = gradient;
-  const r = size * 0.2;
+  const r = size * 0.22;
   ctx.beginPath();
   ctx.moveTo(r, 0); ctx.lineTo(size - r, 0); ctx.quadraticCurveTo(size, 0, size, r);
   ctx.lineTo(size, size - r); ctx.quadraticCurveTo(size, size, size - r, size);
   ctx.lineTo(r, size); ctx.quadraticCurveTo(0, size, 0, size - r);
   ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
   ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = 'white'; ctx.lineWidth = size * 0.12; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'white'; ctx.lineWidth = size * 0.1; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.beginPath(); ctx.moveTo(size * 0.25, size * 0.5); ctx.lineTo(size * 0.45, size * 0.7); ctx.lineTo(size * 0.75, size * 0.3);
   ctx.stroke();
   return canvas.toDataURL('image/png');
@@ -326,7 +790,7 @@ function generateIcon(size) {
 document.getElementById('icon192').href = generateIcon(192);
 document.getElementById('appleIcon').href = generateIcon(180);
 
-// ========== PWA И SW ==========
+// ========== PWA ==========
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault(); deferredPrompt = e;
   document.getElementById('installBanner').classList.add('show');
@@ -345,20 +809,20 @@ function installApp() {
 function closeInstall() { document.getElementById('installBanner').classList.remove('show'); }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js') // Относительный путь работает везде на GitHub Pages
-    .then(() => console.log('✅ SW зарегистрирован'))
-    .catch(err => console.log('SW ошибка:', err));
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log('✅ SW'))
+    .catch(err => console.log('SW err:', err));
 }
 
-// ========== 🎤 ГОЛОСОВОЙ ВВОД ==========
+// ========== 🎤 ГОЛОС ==========
 function initVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const micBtn = document.getElementById('micBtn');
 
   if (!SpeechRecognition) {
     micBtn.classList.add('unsupported');
-    micBtn.title = 'Браузер не поддерживает голосовой ввод';
-    micBtn.onclick = () => alert('⚠️ Ваш браузер не поддерживает Web Speech API.\nИспользуйте Google Chrome, Яндекс Браузер или Safari на iOS.');
+    micBtn.title = 'Браузер не поддерживает голос';
+    micBtn.onclick = () => alert('⚠️ Ваш браузер не поддерживает голосовой ввод.\n\n💡 На компьютере используйте Win+H.');
     return;
   }
 
@@ -370,7 +834,7 @@ function initVoice() {
   recognition.onstart = () => {
     isRecording = true;
     micBtn.classList.add('recording');
-    micBtn.textContent = '⏹️';
+    micBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>';
     document.getElementById('voiceStatus').classList.add('show');
   };
 
@@ -390,26 +854,15 @@ function initVoice() {
   };
 
   recognition.onerror = (event) => {
-  stopVoice();
-  let msg = '🎤 Ошибка: ';
-  if (event.error === 'not-allowed') {
-    msg += 'Доступ к микрофону запрещён.\n\nРазрешите в настройках браузера.';
-  } else if (event.error === 'no-speech') {
-    msg += 'Речь не обнаружена. Говорите громче.';
-  } else if (event.error === 'network') {
-    msg += 'Нет связи с сервером распознавания.\n\n';
-    msg += '⚠️ В России серверы Google заблокированы.\n\n';
-    msg += '✅ РЕШЕНИЯ:\n';
-    msg += '1. Используйте Яндекс Браузер (работает без VPN)\n';
-    msg += '2. Нажмите Win+H для встроенного голосового ввода Windows\n';
-    msg += '3. Включите VPN';
-  } else if (event.error === 'audio-capture') {
-    msg += 'Микрофон не найден. Проверьте подключение.';
-  } else {
-    msg += event.error;
-  }
-  alert(msg);
-};
+    stopVoice();
+    let msg = '🎤 Ошибка: ';
+    if (event.error === 'not-allowed') msg += 'Доступ к микрофону запрещён.';
+    else if (event.error === 'no-speech') msg += 'Речь не обнаружена.';
+    else if (event.error === 'network') msg += 'Нет связи с сервером.\n💡 На ПК используйте Win+H.';
+    else if (event.error === 'audio-capture') msg += 'Микрофон не найден.';
+    else msg += event.error;
+    alert(msg);
+  };
 
   recognition.onend = () => stopVoice();
 }
@@ -419,7 +872,7 @@ function toggleVoice() {
   if (isRecording) recognition.stop();
   else {
     try { recognition.start(); } 
-    catch(e) { alert('Ошибка запуска микрофона. Обновите страницу.'); }
+    catch(e) { alert('Ошибка запуска. Обновите страницу.'); }
   }
 }
 
@@ -427,42 +880,47 @@ function stopVoice() {
   isRecording = false;
   const micBtn = document.getElementById('micBtn');
   micBtn.classList.remove('recording');
-  micBtn.textContent = '🎤';
+  micBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path><path d="M19 10v2a7 7 0 01-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>';
   document.getElementById('voiceStatus').classList.remove('show');
 }
 
 initVoice();
 
-// ========== ОСНОВНАЯ ЛОГИКА ==========
 document.getElementById('dateInput').value = '';
 
+// ========== ПАРСИНГ ==========
 function parseDateFromText(text) {
   const today = new Date(); today.setHours(0,0,0,0);
-  let date = null, time = null;
+  let date = null, timeStart = null, timeEnd = null;
   let cleanText = text;
 
-  // 1. Время: "в 15:00", "15.00", "в 15 часов", "15 часов" (частая диктовка Android)
-  let timeMatch = text.match(/(?:в\s+)?(\d{1,2})[:\.](\d{2})/i);
-  if (timeMatch) {
-    time = { h: parseInt(timeMatch[1]), m: parseInt(timeMatch[2]) };
-    cleanText = cleanText.replace(timeMatch[0], '').trim();
+  let intervalMatch = cleanText.match(/с\s+(\d{1,2})[:\.]?(\d{2})?\s+(?:до|по)\s+(\d{1,2})[:\.]?(\d{2})?/i);
+  if (intervalMatch) {
+    timeStart = { h: parseInt(intervalMatch[1]), m: intervalMatch[2] ? parseInt(intervalMatch[2]) : 0 };
+    timeEnd = { h: parseInt(intervalMatch[3]), m: intervalMatch[4] ? parseInt(intervalMatch[4]) : 0 };
+    cleanText = cleanText.replace(intervalMatch[0], '').trim();
   } else {
-    let hourMatch = text.match(/(?:в\s+)?(\d{1,2})\s+(?:часов|часа)/i);
-    if (hourMatch) {
-      time = { h: parseInt(hourMatch[1]), m: 0 };
-      cleanText = cleanText.replace(hourMatch[0], '').trim();
+    let timeMatch = cleanText.match(/(?:в\s+)?(\d{1,2})[:\.](\d{2})/i);
+    if (timeMatch) {
+      timeStart = { h: parseInt(timeMatch[1]), m: parseInt(timeMatch[2]) };
+      cleanText = cleanText.replace(timeMatch[0], '').trim();
+    } else {
+      let hourMatch = cleanText.match(/(?:в\s+)?(\d{1,2})\s+(?:часов|часа)/i);
+      if (hourMatch) {
+        timeStart = { h: parseInt(hourMatch[1]), m: 0 };
+        cleanText = cleanText.replace(hourMatch[0], '').trim();
+      }
     }
   }
 
-  // 2. Дата
   if (/сегодня/i.test(cleanText)) {
     date = new Date(today); cleanText = cleanText.replace(/сегодня/i, '').trim();
-  } else if (/завтра/i.test(cleanText)) {
-    date = new Date(today); date.setDate(date.getDate() + 1); cleanText = cleanText.replace(/завтра/i, '').trim();
   } else if (/послезавтра/i.test(cleanText)) {
     date = new Date(today); date.setDate(date.getDate() + 2); cleanText = cleanText.replace(/послезавтра/i, '').trim();
+  } else if (/завтра/i.test(cleanText)) {
+    date = new Date(today); date.setDate(date.getDate() + 1); cleanText = cleanText.replace(/завтра/i, '').trim();
   } else {
-    const dayMatch = cleanText.match(/в\s*(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)/i);
+    const dayMatch = cleanText.match(/(?:в\s*)?(понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье)/i);
     if (dayMatch) {
       const dayNames = { 'понедельник':1,'вторник':2,'среду':3,'четверг':4,'пятницу':5,'субботу':6,'воскресенье':0 };
       const target = dayNames[dayMatch[1].toLowerCase()];
@@ -483,7 +941,7 @@ function parseDateFromText(text) {
 
   cleanText = cleanText.replace(/^\s*(в|на|к|по)\s+/i, '').trim();
   cleanText = cleanText.replace(/\s+/g, ' ').trim();
-  return { text: cleanText, date, time };
+  return { text: cleanText, date, timeStart, timeEnd };
 }
 
 function addTask() {
@@ -493,29 +951,124 @@ function addTask() {
   if (!rawText) { alert('Введите задачу!'); return; }
 
   const parsed = parseDateFromText(rawText);
-  // Приоритет: дата из текста > дата из поля > сегодня
   let finalDate = parsed.date ? formatDate(parsed.date) : (dateVal || formatDate(new Date()));
-  let finalTime = timeVal || (parsed.time ? `${String(parsed.time.h).padStart(2,'0')}:${String(parsed.time.m).padStart(2,'0')}` : '');
+  let finalTime = timeVal || (parsed.timeStart ? `${String(parsed.timeStart.h).padStart(2,'0')}:${String(parsed.timeStart.m).padStart(2,'0')}` : '');
+  let finalTimeEnd = parsed.timeEnd ? `${String(parsed.timeEnd.h).padStart(2,'0')}:${String(parsed.timeEnd.m).padStart(2,'0')}` : '';
 
-  tasks.push({ id: Date.now(), text: parsed.text || rawText, date: finalDate, time: finalTime, done: false, created: Date.now() });
+  tasks.push({
+    id: Date.now(),
+    text: parsed.text || rawText,
+    date: finalDate,
+    time: finalTime,
+    timeEnd: finalTimeEnd,
+    done: false,
+    created: Date.now()
+  });
   save(); render();
+  scheduleAllNotifications();
   document.getElementById('taskInput').value = '';
   document.getElementById('timeInput').value = '';
   document.getElementById('taskInput').focus();
 }
 
 function formatDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-function toggleDone(id) { const t = tasks.find(t => t.id === id); if (t) { t.done = !t.done; save(); render(); } }
-function deleteTask(id) { if (confirm('Удалить задачу?')) { tasks = tasks.filter(t => t.id !== id); save(); render(); } }
+function toggleDone(id) { const t = tasks.find(t => t.id === id); if (t) { t.done = !t.done; save(); render(); scheduleAllNotifications(); } }
+function deleteTask(id) { if (confirm('Удалить задачу?')) { tasks = tasks.filter(t => t.id !== id); save(); render(); scheduleAllNotifications(); } }
 function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
 
-// ========== РЕДАКТИРОВАНИЕ ==========
+// ========== ЭКСПОРТ В КАЛЕНДАРЬ ==========
+function exportTaskToCalendar(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  
+  if (!task.time) {
+    alert('⚠️ У задачи нет времени. Добавьте время, чтобы экспортировать в календарь.');
+    return;
+  }
+  
+  const icsContent = generateICS([task]);
+  downloadICS(icsContent, `task-${task.id}.ics`);
+}
+
+function exportAllToCalendar() {
+  const activeTasks = tasks.filter(t => !t.done && t.time);
+  
+  if (activeTasks.length === 0) {
+    alert('Нет активных задач с временем для экспорта');
+    return;
+  }
+  
+  const icsContent = generateICS(activeTasks);
+  downloadICS(icsContent, 'all-tasks.ics');
+}
+
+function generateICS(tasksArray) {
+  let ics = 'BEGIN:VCALENDAR\n';
+  ics += 'VERSION:2.0\n';
+  ics += 'PRODID:-//My Tasks//RU\n';
+  ics += 'CALSCALE:GREGORIAN\n';
+  ics += 'METHOD:PUBLISH\n';
+  
+  tasksArray.forEach(task => {
+    const startDate = new Date(task.date);
+    const [startHours, startMinutes] = task.time.split(':').map(Number);
+    startDate.setHours(startHours, startMinutes, 0);
+    
+    let endDate;
+    if (task.timeEnd) {
+      endDate = new Date(task.date);
+      const [endHours, endMinutes] = task.timeEnd.split(':').map(Number);
+      endDate.setHours(endHours, endMinutes, 0);
+    } else {
+      endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 час по умолчанию
+    }
+    
+    const formatICSDate = (d) => {
+      return d.getFullYear() +
+        String(d.getMonth() + 1).padStart(2, '0') +
+        String(d.getDate()).padStart(2, '0') + 'T' +
+        String(d.getHours()).padStart(2, '0') +
+        String(d.getMinutes()).padStart(2, '0') +
+        String(d.getSeconds()).padStart(2, '0');
+    };
+    
+    ics += 'BEGIN:VEVENT\n';
+    ics += `UID:${task.id}@mytasks\n`;
+    ics += `DTSTAMP:${formatICSDate(new Date())}\n`;
+    ics += `DTSTART:${formatICSDate(startDate)}\n`;
+    ics += `DTEND:${formatICSDate(endDate)}\n`;
+    ics += `SUMMARY:${escapeICS(task.text)}\n`;
+    ics += `DESCRIPTION:Задача из приложения "Мои задачи"\n`;
+    ics += 'END:VEVENT\n';
+  });
+  
+  ics += 'END:VCALENDAR';
+  return ics;
+}
+
+function escapeICS(text) {
+  return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+}
+
+function downloadICS(content, filename) {
+  const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 function openEdit(id) {
   const task = tasks.find(t => t.id === id); if (!task) return;
   editingTaskId = id;
   document.getElementById('editText').value = task.text;
   document.getElementById('editDate').value = task.date;
   document.getElementById('editTime').value = task.time || '';
+  document.getElementById('editTimeEnd').value = task.timeEnd || '';
   document.getElementById('editModal').classList.add('show');
   setTimeout(() => document.getElementById('editText').focus(), 100);
 }
@@ -525,10 +1078,11 @@ function saveEdit() {
   const newText = document.getElementById('editText').value.trim();
   const newDate = document.getElementById('editDate').value;
   const newTime = document.getElementById('editTime').value;
+  const newTimeEnd = document.getElementById('editTimeEnd').value;
   if (!newText || !newDate) { alert('Заполните текст и дату!'); return; }
   
   const task = tasks.find(t => t.id === editingTaskId);
-  if (task) { task.text = newText; task.date = newDate; task.time = newTime; save(); render(); closeEdit(); }
+  if (task) { task.text = newText; task.date = newDate; task.time = newTime; task.timeEnd = newTimeEnd; save(); render(); scheduleAllNotifications(); closeEdit(); }
 }
 
 document.getElementById('editModal').addEventListener('click', (e) => { if (e.target.id === 'editModal') closeEdit(); });
@@ -537,7 +1091,6 @@ document.addEventListener('keydown', (e) => {
 });
 document.getElementById('editText').addEventListener('keypress', (e) => { if (e.key === 'Enter') saveEdit(); });
 
-// ========== ОТРИСОВКА ==========
 function getFiltered() {
   const today = new Date(); today.setHours(0,0,0,0);
   const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
@@ -567,7 +1120,10 @@ function render() {
   document.getElementById('statWeek').textContent = tasks.filter(t => { const d = new Date(t.date); const now = new Date(); return d >= now && d < weekEnd && !t.done; }).length;
   document.getElementById('statDone').textContent = tasks.filter(t => t.done).length;
 
-  if (filtered.length === 0) { list.innerHTML = '<div class="empty">🌟 Задач нет. Самое время добавить первую!</div>'; return; }
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">✨</div>Задач нет. Самое время добавить первую!</div>';
+    return;
+  }
 
   const byMonth = {};
   filtered.forEach(t => {
@@ -583,26 +1139,50 @@ function render() {
 
   Object.keys(byMonth).sort().reverse().forEach(mKey => {
     const m = byMonth[mKey];
-    html += `<div class="month-group"><div class="month-title">${MONTHS_GEN[m.month]} ${m.year}</div>`;
+    html += `<div class="month-group"><div class="month-title">${MONTHS_NOM[m.month]} ${m.year}</div>`;
     Object.keys(m.days).sort().reverse().forEach(dateKey => {
       const d = new Date(dateKey);
       const diff = Math.round((d - todayDate) / (1000*60*60*24));
       let label = `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}, ${WEEKDAYS[d.getDay()]}`;
       let cls = '';
-      if (diff === 0) { label = '📅 Сегодня, ' + label; cls = 'today'; }
-      else if (diff === 1) { label = '🔜 Завтра, ' + label; cls = 'today'; }
-      else if (diff === -1) { label = '⚠️ Вчера, ' + label; cls = 'overdue'; }
+      if (diff === 0) { label = '📅 Сегодня · ' + label; cls = 'today'; }
+      else if (diff === 1) { label = '🔜 Завтра · ' + label; cls = 'today'; }
+      else if (diff === -1) { label = '⚠️ Вчера · ' + label; cls = 'overdue'; }
       else if (diff < -1) { label = '🔴 ' + label + ' (просрочено)'; cls = 'overdue'; }
 
       html += `<div class="day-group"><div class="day-title ${cls}">${label}</div>`;
       m.days[dateKey].forEach(t => {
+        let timeDisplay = '';
+        if (t.time && t.timeEnd) timeDisplay = `${t.time} — ${t.timeEnd}`;
+        else if (t.time) timeDisplay = t.time;
+        
         html += `<div class="task ${t.done ? 'done' : ''}">
-          ${t.time ? `<div class="task-time">${t.time}</div>` : ''}
+          ${timeDisplay ? `<div class="task-time">${timeDisplay}</div>` : ''}
           <div class="task-text">${escapeHtml(t.text)}</div>
           <div class="task-actions">
-            <button class="btn-edit" onclick="openEdit(${t.id})" title="Редактировать">✏️</button>
-            <button class="btn-done" onclick="toggleDone(${t.id})" title="${t.done ? 'Вернуть' : 'Выполнено'}">${t.done ? '↩️' : '✅'}</button>
-            <button class="btn-del" onclick="deleteTask(${t.id})" title="Удалить">🗑️</button>
+            <button class="btn-icon btn-calendar" onclick="exportTaskToCalendar(${t.id})" title="Добавить в календарь">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </button>
+            <button class="btn-icon btn-edit" onclick="openEdit(${t.id})" title="Редактировать">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="btn-icon btn-done" onclick="toggleDone(${t.id})" title="${t.done ? 'Вернуть' : 'Выполнено'}">
+              ${t.done ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 102.13-9.36L1 10"></path></svg>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'}
+            </button>
+            <button class="btn-icon btn-del" onclick="deleteTask(${t.id})" title="Удалить">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+              </svg>
+            </button>
           </div>
         </div>`;
       });
@@ -624,6 +1204,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 document.getElementById('taskInput').addEventListener('keypress', e => { if (e.key === 'Enter') addTask(); });
 
 render();
+initNotifications();
 </script>
 </body>
 </html>

@@ -1,15 +1,8 @@
-// ИЗМЕНЕНО: tasks-v2 заставит все телефоны скачать новую версию
-const CACHE_NAME = 'tasks-v2';
-const ASSETS = [
-  '/my-tasks/',
-  '/my-tasks/index.html',
-  '/my-tasks/manifest.json'
-];
+const CACHE_NAME = 'tasks-v5-calendar';
+const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
   self.skipWaiting();
 });
 
