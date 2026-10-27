@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tasks-v9-priorities-ocr';
+const CACHE_NAME = 'tasks-v9-1-months-fix';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', event => {
