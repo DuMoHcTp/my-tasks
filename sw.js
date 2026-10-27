@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tasks-v8-version';
+const CACHE_NAME = 'tasks-v9-priorities-ocr';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', event => {
